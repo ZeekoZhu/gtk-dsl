@@ -1,0 +1,6 @@
+source https://www.nuget.org/api/v2
+storage none
+
+nuget FSharp.Core
+nuget GTKSharp
+nuget Humanizer.Core
