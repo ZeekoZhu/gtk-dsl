@@ -4,7 +4,8 @@ open System
 open System.Runtime.CompilerServices
 open Gtk
 open Gtk
-open Gtk.Container
+open Gtk
+open Gtk
 
 
 type DslEvent = { Event: string }
@@ -56,12 +57,19 @@ type BasePropertyBuilder<'p>() =
 let componentSymbol = { Value = "Component" }
 let parentSymbol = { Value = "Parent" }
 
-[<AbstractClass>]
-type AbstractContainerDescriptor<'w, 'p when 'w :> Container>(props: 'p seq, bindProperty: 'w -> 'p -> unit) =
-    inherit BaseWidgetDescriptor<'w, 'p>(props, bindProperty)
-    abstract member Replace : #Widget * #Widget -> unit
-    member this.SetParent(widget: #Container) =
-        widget.ChildGetProperty
+type ChildHolder() =
+    inherit Bin()
+
+    member this.Replace(child: #Widget) =
+        if this.Child <> null then
+            this.Child.Destroy()
+
+        this.Add(child)
+
+let wrapChild (child: #Widget) =
+    let childHolder = new ChildHolder()
+    childHolder.Add(child)
+    childHolder :> Widget
 
 [<Extension>]
 type WidgetExtensions() =
