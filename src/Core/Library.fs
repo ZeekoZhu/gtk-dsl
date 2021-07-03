@@ -3,9 +3,7 @@
 open System
 open System.Runtime.CompilerServices
 open Gtk
-open Gtk
-open Gtk
-open Gtk
+
 
 
 type DslEvent = { Event: string }
@@ -28,31 +26,41 @@ type WidgetDescriptor =
 type BaseWidgetDescriptor<'w, 'p when 'w :> Widget>(props: 'p seq, bindProperty: 'w -> 'p -> unit) =
     abstract member BindTyped : 'w -> unit
     abstract member CreateTyped : unit -> 'w
+    abstract member Bind : widget: Widget option -> Widget
     default this.BindTyped(widget: 'w) = props |> Seq.iter (bindProperty widget)
+
+    default this.Bind(widget: Widget option) =
+        let createNew () =
+            let w = this.CreateTyped()
+            this.BindTyped(w)
+            w :> Widget
+
+        match widget with
+        | Some widget ->
+            match widget with
+            | :? 'w as w ->
+                this.BindTyped(w)
+                w :> Widget
+            | _ -> createNew ()
+        | None -> createNew ()
 
     interface WidgetDescriptor with
         member this.Create() = this.CreateTyped() :> Widget
 
-        member this.Bind(widget: Widget option) =
-            let createNew () =
-                let w = this.CreateTyped()
-                this.BindTyped(w)
-                w :> Widget
+        member this.Bind(widget: Widget option) = this.Bind(widget)
 
-            match widget with
-            | Some widget ->
-                match widget with
-                | :? 'w as w ->
-                    this.BindTyped(w)
-                    w :> Widget
-                | _ -> createNew ()
-            | None -> createNew ()
 
 
 type BasePropertyBuilder<'p>() =
     member this.Yield(()) = Seq.empty<'p>
     member this.For(items: 't seq, fn: 't -> 'p seq) = items |> Seq.map fn
 
+type ChildPropertyDescriptor<'c when 'c :> Container>() =
+    abstract member AddChild : 'c * #Widget -> unit
+
+type ChildDescriptor<'c when 'c :> Container> =
+    { ChildProperties: ChildPropertyDescriptor<'c>
+      Child: WidgetDescriptor }
 
 let componentSymbol = { Value = "Component" }
 let parentSymbol = { Value = "Parent" }
@@ -70,6 +78,46 @@ let wrapChild (child: #Widget) =
     let childHolder = new ChildHolder()
     childHolder.Add(child)
     childHolder :> Widget
+
+[<AbstractClass>]
+type ComponentDescriptor<'p when 'p: comparison>(props: Set<'p>) =
+    abstract member Render : props: Set<'p> -> #WidgetDescriptor
+
+    interface WidgetDescriptor with
+        member this.Create() =
+            let subTree = this.Render(props)
+            subTree.Create()
+
+        member this.Bind(widget: Widget option) =
+            let subTree = this.Render(props)
+            subTree.Bind(widget)
+
+[<AbstractClass>]
+type BaseContainerDescriptor<'w, 'p when 'w :> Container>
+    (
+        props: 'p seq,
+        bindProperty: 'w -> 'p -> unit,
+        children: ChildDescriptor<'w> seq
+    ) =
+    inherit BaseWidgetDescriptor<'w, 'p>(props, bindProperty)
+
+    override this.BindTyped(widget: 'w) =
+        base.BindTyped(widget)
+        let container = widget
+
+        container.Children
+        |> Seq.iter (fun x -> x.Destroy())
+
+        for childDesc in children do
+            let holder = new ChildHolder()
+            childDesc.ChildProperties.AddChild(container, holder)
+            let childContent = childDesc.Child.Create()
+            let childContent = childDesc.Child.Bind(Some childContent)
+            holder.Replace(childContent)
+
+
+    interface WidgetDescriptor with
+        member this.Bind(widget: Widget option) = widget.Value
 
 [<Extension>]
 type WidgetExtensions() =
@@ -99,12 +147,3 @@ type StatefulComponent() =
         member this.Dispose() =
             this.OnDestroy()
             if widget <> null then widget.Destroy()
-
-//    interface WidgetDescriptor with
-//        member this.Create() =
-//            this.OnInit()
-//            widget <- this.Render().Create()
-//            widget.Data.Add(componentSymbol, widget)
-//            widget
-//
-//        member this.Bind(_: Widget option) =
