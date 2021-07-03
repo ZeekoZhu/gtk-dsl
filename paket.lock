@@ -5,6 +5,8 @@ NUGET
       GLibSharp (>= 3.24.24.34) - restriction: >= netstandard2.0
     CairoSharp (3.24.24.34) - restriction: >= netstandard2.0
     FSharp.Core (5.0.2)
+    FSharp.Quotations.Evaluator (2.1)
+      FSharp.Core (>= 4.3.1) - restriction: >= netstandard2.0
     GdkSharp (3.24.24.34) - restriction: >= netstandard2.0
       CairoSharp (>= 3.24.24.34) - restriction: >= netstandard2.0
       GioSharp (>= 3.24.24.34) - restriction: >= netstandard2.0

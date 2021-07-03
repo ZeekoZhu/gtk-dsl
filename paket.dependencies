@@ -2,5 +2,6 @@ source https://www.nuget.org/api/v2
 storage none
 
 nuget FSharp.Core
+nuget FSharp.Quotations.Evaluator
 nuget GTKSharp
 nuget Humanizer.Core
