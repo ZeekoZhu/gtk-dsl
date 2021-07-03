@@ -1,4 +1,4 @@
-module GtkDsl.Binding.TearoffMenuItem
+module Gtk.DSL.Binding.TearoffMenuItem
 open System
 open Gtk
 open Gtk.DSL.Core

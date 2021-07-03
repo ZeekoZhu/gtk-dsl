@@ -1,4 +1,4 @@
-module GtkDsl.Binding.FontSelectionDialog
+module Gtk.DSL.Binding.FontSelectionDialog
 open System
 open Gtk
 open Gtk.DSL.Core

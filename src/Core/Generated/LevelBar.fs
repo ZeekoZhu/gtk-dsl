@@ -1,4 +1,4 @@
-module GtkDsl.Binding.LevelBar
+module Gtk.DSL.Binding.LevelBar
 open System
 open Gtk
 open Gtk.DSL.Core

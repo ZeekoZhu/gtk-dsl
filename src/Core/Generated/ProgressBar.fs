@@ -1,4 +1,4 @@
-module GtkDsl.Binding.ProgressBar
+module Gtk.DSL.Binding.ProgressBar
 open System
 open Gtk
 open Gtk.DSL.Core

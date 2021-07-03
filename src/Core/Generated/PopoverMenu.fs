@@ -1,4 +1,4 @@
-module GtkDsl.Binding.PopoverMenu
+module Gtk.DSL.Binding.PopoverMenu
 open System
 open Gtk
 open Gtk.DSL.Core

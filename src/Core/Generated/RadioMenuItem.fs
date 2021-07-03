@@ -1,4 +1,4 @@
-module GtkDsl.Binding.RadioMenuItem
+module Gtk.DSL.Binding.RadioMenuItem
 open System
 open Gtk
 open Gtk.DSL.Core

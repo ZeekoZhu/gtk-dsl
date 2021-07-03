@@ -1,4 +1,4 @@
-module GtkDsl.Binding.SearchBar
+module Gtk.DSL.Binding.SearchBar
 open System
 open Gtk
 open Gtk.DSL.Core

@@ -1,4 +1,4 @@
-module GtkDsl.Binding.FontChooserWidget
+module Gtk.DSL.Binding.FontChooserWidget
 open System
 open Gtk
 open Gtk.DSL.Core

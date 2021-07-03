@@ -1,4 +1,4 @@
-module GtkDsl.Binding.FlowBox
+module Gtk.DSL.Binding.FlowBox
 open System
 open Gtk
 open Gtk.DSL.Core

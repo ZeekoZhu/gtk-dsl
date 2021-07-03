@@ -1,4 +1,4 @@
-module GtkDsl.Binding.NodeView
+module Gtk.DSL.Binding.NodeView
 open System
 open Gtk
 open Gtk.DSL.Core

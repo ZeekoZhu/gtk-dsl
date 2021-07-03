@@ -1,4 +1,4 @@
-module GtkDsl.Binding.TextView
+module Gtk.DSL.Binding.TextView
 open System
 open Gtk
 open Gtk.DSL.Core

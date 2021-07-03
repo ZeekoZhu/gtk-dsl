@@ -1,4 +1,4 @@
-module GtkDsl.Binding.RecentChooserDefault
+module Gtk.DSL.Binding.RecentChooserDefault
 open System
 open Gtk
 open Gtk.DSL.Core

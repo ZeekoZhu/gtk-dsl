@@ -1,4 +1,4 @@
-module GtkDsl.Binding.AspectFrame
+module Gtk.DSL.Binding.AspectFrame
 open System
 open Gtk
 open Gtk.DSL.Core

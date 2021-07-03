@@ -1,4 +1,4 @@
-module GtkDsl.Binding.Label
+module Gtk.DSL.Binding.Label
 open System
 open Gtk
 open Gtk.DSL.Core

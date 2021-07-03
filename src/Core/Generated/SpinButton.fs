@@ -1,4 +1,4 @@
-module GtkDsl.Binding.SpinButton
+module Gtk.DSL.Binding.SpinButton
 open System
 open Gtk
 open Gtk.DSL.Core

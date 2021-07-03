@@ -1,4 +1,4 @@
-module GtkDsl.Binding.ShortcutLabel
+module Gtk.DSL.Binding.ShortcutLabel
 open System
 open Gtk
 open Gtk.DSL.Core

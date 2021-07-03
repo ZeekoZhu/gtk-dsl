@@ -1,4 +1,4 @@
-module GtkDsl.Binding.Spinner
+module Gtk.DSL.Binding.Spinner
 open System
 open Gtk
 open Gtk.DSL.Core

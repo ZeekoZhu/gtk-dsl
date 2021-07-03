@@ -1,4 +1,4 @@
-module GtkDsl.Binding.MessageDialog
+module Gtk.DSL.Binding.MessageDialog
 open System
 open Gtk
 open Gtk.DSL.Core

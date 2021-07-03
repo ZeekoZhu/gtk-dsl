@@ -1,4 +1,4 @@
-module GtkDsl.Binding.LinkButton
+module Gtk.DSL.Binding.LinkButton
 open System
 open Gtk
 open Gtk.DSL.Core

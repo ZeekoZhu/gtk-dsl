@@ -1,4 +1,4 @@
-module GtkDsl.Binding.CustomPaperUnixDialog
+module Gtk.DSL.Binding.CustomPaperUnixDialog
 open System
 open Gtk
 open Gtk.DSL.Core

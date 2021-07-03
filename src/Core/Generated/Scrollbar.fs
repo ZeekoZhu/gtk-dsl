@@ -1,4 +1,4 @@
-module GtkDsl.Binding.Scrollbar
+module Gtk.DSL.Binding.Scrollbar
 open System
 open Gtk
 open Gtk.DSL.Core

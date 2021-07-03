@@ -1,4 +1,4 @@
-module GtkDsl.Binding.Invisible
+module Gtk.DSL.Binding.Invisible
 open System
 open Gtk
 open Gtk.DSL.Core

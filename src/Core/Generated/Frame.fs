@@ -1,4 +1,4 @@
-module GtkDsl.Binding.Frame
+module Gtk.DSL.Binding.Frame
 open System
 open Gtk
 open Gtk.DSL.Core

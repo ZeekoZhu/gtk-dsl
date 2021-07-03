@@ -1,4 +1,4 @@
-module GtkDsl.Binding.HeaderBar
+module Gtk.DSL.Binding.HeaderBar
 open System
 open Gtk
 open Gtk.DSL.Core

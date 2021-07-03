@@ -1,4 +1,4 @@
-module GtkDsl.Binding.VolumeButton
+module Gtk.DSL.Binding.VolumeButton
 open System
 open Gtk
 open Gtk.DSL.Core

@@ -1,4 +1,4 @@
-module GtkDsl.Binding.GLArea
+module Gtk.DSL.Binding.GLArea
 open System
 open Gtk
 open Gtk.DSL.Core

@@ -1,4 +1,4 @@
-module GtkDsl.Binding.ShortcutsGroup
+module Gtk.DSL.Binding.ShortcutsGroup
 open System
 open Gtk
 open Gtk.DSL.Core

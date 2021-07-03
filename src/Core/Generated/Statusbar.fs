@@ -1,4 +1,4 @@
-module GtkDsl.Binding.Statusbar
+module Gtk.DSL.Binding.Statusbar
 open System
 open Gtk
 open Gtk.DSL.Core

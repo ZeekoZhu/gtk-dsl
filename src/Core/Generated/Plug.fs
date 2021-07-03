@@ -1,4 +1,4 @@
-module GtkDsl.Binding.Plug
+module Gtk.DSL.Binding.Plug
 open System
 open Gtk
 open Gtk.DSL.Core

@@ -1,4 +1,4 @@
-module GtkDsl.Binding.ColorButton
+module Gtk.DSL.Binding.ColorButton
 open System
 open Gtk
 open Gtk.DSL.Core

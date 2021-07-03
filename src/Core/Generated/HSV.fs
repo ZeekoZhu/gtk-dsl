@@ -1,4 +1,4 @@
-module GtkDsl.Binding.HSV
+module Gtk.DSL.Binding.HSV
 open System
 open Gtk
 open Gtk.DSL.Core

@@ -1,4 +1,4 @@
-module GtkDsl.Binding.Grid
+module Gtk.DSL.Binding.Grid
 open System
 open Gtk
 open Gtk.DSL.Core

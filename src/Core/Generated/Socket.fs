@@ -1,4 +1,4 @@
-module GtkDsl.Binding.Socket
+module Gtk.DSL.Binding.Socket
 open System
 open Gtk
 open Gtk.DSL.Core

@@ -1,4 +1,4 @@
-module GtkDsl.Binding.FileChooserWidget
+module Gtk.DSL.Binding.FileChooserWidget
 open System
 open Gtk
 open Gtk.DSL.Core

@@ -1,4 +1,4 @@
-module GtkDsl.Binding.Paned
+module Gtk.DSL.Binding.Paned
 open System
 open Gtk
 open Gtk.DSL.Core

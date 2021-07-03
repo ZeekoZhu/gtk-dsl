@@ -1,4 +1,4 @@
-module GtkDsl.Binding.Revealer
+module Gtk.DSL.Binding.Revealer
 open System
 open Gtk
 open Gtk.DSL.Core

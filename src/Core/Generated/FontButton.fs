@@ -1,4 +1,4 @@
-module GtkDsl.Binding.FontButton
+module Gtk.DSL.Binding.FontButton
 open System
 open Gtk
 open Gtk.DSL.Core

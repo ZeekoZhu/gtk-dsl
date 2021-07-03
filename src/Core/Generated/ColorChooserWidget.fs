@@ -1,4 +1,4 @@
-module GtkDsl.Binding.ColorChooserWidget
+module Gtk.DSL.Binding.ColorChooserWidget
 open System
 open Gtk
 open Gtk.DSL.Core

@@ -1,4 +1,4 @@
-module GtkDsl.Binding.DrawingArea
+module Gtk.DSL.Binding.DrawingArea
 open System
 open Gtk
 open Gtk.DSL.Core

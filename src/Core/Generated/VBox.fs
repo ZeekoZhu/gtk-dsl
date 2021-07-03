@@ -1,4 +1,4 @@
-module GtkDsl.Binding.VBox
+module Gtk.DSL.Binding.VBox
 open System
 open Gtk
 open Gtk.DSL.Core

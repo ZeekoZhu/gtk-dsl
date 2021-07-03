@@ -1,4 +1,4 @@
-module GtkDsl.Binding.StackSwitcher
+module Gtk.DSL.Binding.StackSwitcher
 open System
 open Gtk
 open Gtk.DSL.Core

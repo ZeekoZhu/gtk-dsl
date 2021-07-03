@@ -1,4 +1,4 @@
-module GtkDsl.Binding.Win32EmbedWidget
+module Gtk.DSL.Binding.Win32EmbedWidget
 open System
 open Gtk
 open Gtk.DSL.Core

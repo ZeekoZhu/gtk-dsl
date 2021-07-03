@@ -1,4 +1,4 @@
-module GtkDsl.Binding.Widget
+module Gtk.DSL.Binding.Widget
 open System
 open Gtk
 open Gtk.DSL.Core

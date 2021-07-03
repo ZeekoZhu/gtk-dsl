@@ -1,4 +1,4 @@
-module GtkDsl.Binding.OffscreenWindow
+module Gtk.DSL.Binding.OffscreenWindow
 open System
 open Gtk
 open Gtk.DSL.Core

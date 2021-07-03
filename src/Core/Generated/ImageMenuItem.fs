@@ -1,4 +1,4 @@
-module GtkDsl.Binding.ImageMenuItem
+module Gtk.DSL.Binding.ImageMenuItem
 open System
 open Gtk
 open Gtk.DSL.Core

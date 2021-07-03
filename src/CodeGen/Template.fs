@@ -24,7 +24,7 @@ let moduleTemplate (info: BindableWidget) =
         fn ()
         pop ()
 
-    line $"module GtkDsl.Binding.{info.Name}"
+    line $"module Gtk.DSL.Binding.{info.Name}"
     line "open System"
     line "open Gtk"
     line "open Gtk.DSL.Core"

@@ -1,4 +1,4 @@
-module GtkDsl.Binding.ScaleButton
+module Gtk.DSL.Binding.ScaleButton
 open System
 open Gtk
 open Gtk.DSL.Core

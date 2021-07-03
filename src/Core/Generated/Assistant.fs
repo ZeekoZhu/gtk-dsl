@@ -1,4 +1,4 @@
-module GtkDsl.Binding.Assistant
+module Gtk.DSL.Binding.Assistant
 open System
 open Gtk
 open Gtk.DSL.Core

@@ -1,4 +1,4 @@
-module GtkDsl.Binding.ModelMenuItem
+module Gtk.DSL.Binding.ModelMenuItem
 open System
 open Gtk
 open Gtk.DSL.Core

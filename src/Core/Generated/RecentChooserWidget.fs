@@ -1,4 +1,4 @@
-module GtkDsl.Binding.RecentChooserWidget
+module Gtk.DSL.Binding.RecentChooserWidget
 open System
 open Gtk
 open Gtk.DSL.Core

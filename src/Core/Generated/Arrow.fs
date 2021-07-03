@@ -1,4 +1,4 @@
-module GtkDsl.Binding.Arrow
+module Gtk.DSL.Binding.Arrow
 open System
 open Gtk
 open Gtk.DSL.Core

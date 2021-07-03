@@ -1,4 +1,4 @@
-module GtkDsl.Binding.Dialog
+module Gtk.DSL.Binding.Dialog
 open System
 open Gtk
 open Gtk.DSL.Core

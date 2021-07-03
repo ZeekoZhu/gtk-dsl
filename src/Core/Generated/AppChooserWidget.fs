@@ -1,4 +1,4 @@
-module GtkDsl.Binding.AppChooserWidget
+module Gtk.DSL.Binding.AppChooserWidget
 open System
 open Gtk
 open Gtk.DSL.Core

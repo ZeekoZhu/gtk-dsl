@@ -1,4 +1,4 @@
-module GtkDsl.Binding.ComboBoxText
+module Gtk.DSL.Binding.ComboBoxText
 open System
 open Gtk
 open Gtk.DSL.Core

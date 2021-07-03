@@ -1,4 +1,4 @@
-module GtkDsl.Binding.StackSidebar
+module Gtk.DSL.Binding.StackSidebar
 open System
 open Gtk
 open Gtk.DSL.Core

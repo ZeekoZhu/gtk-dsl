@@ -1,4 +1,4 @@
-module GtkDsl.Binding.FileChooserButton
+module Gtk.DSL.Binding.FileChooserButton
 open System
 open Gtk
 open Gtk.DSL.Core

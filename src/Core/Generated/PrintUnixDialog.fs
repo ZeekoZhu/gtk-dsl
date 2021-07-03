@@ -1,4 +1,4 @@
-module GtkDsl.Binding.PrintUnixDialog
+module Gtk.DSL.Binding.PrintUnixDialog
 open System
 open Gtk
 open Gtk.DSL.Core

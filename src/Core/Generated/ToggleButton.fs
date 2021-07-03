@@ -1,4 +1,4 @@
-module GtkDsl.Binding.ToggleButton
+module Gtk.DSL.Binding.ToggleButton
 open System
 open Gtk
 open Gtk.DSL.Core

@@ -1,4 +1,4 @@
-module GtkDsl.Binding.Misc
+module Gtk.DSL.Binding.Misc
 open System
 open Gtk
 open Gtk.DSL.Core

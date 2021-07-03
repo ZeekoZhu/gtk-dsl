@@ -1,4 +1,4 @@
-module GtkDsl.Binding.CellView
+module Gtk.DSL.Binding.CellView
 open System
 open Gtk
 open Gtk.DSL.Core

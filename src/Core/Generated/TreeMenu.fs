@@ -1,4 +1,4 @@
-module GtkDsl.Binding.TreeMenu
+module Gtk.DSL.Binding.TreeMenu
 open System
 open Gtk
 open Gtk.DSL.Core

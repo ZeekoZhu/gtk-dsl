@@ -1,4 +1,4 @@
-module GtkDsl.Binding.AccelLabel
+module Gtk.DSL.Binding.AccelLabel
 open System
 open Gtk
 open Gtk.DSL.Core

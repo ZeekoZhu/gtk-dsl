@@ -1,4 +1,4 @@
-module GtkDsl.Binding.Notebook
+module Gtk.DSL.Binding.Notebook
 open System
 open Gtk
 open Gtk.DSL.Core

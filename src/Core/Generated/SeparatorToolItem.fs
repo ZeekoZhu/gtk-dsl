@@ -1,4 +1,4 @@
-module GtkDsl.Binding.SeparatorToolItem
+module Gtk.DSL.Binding.SeparatorToolItem
 open System
 open Gtk
 open Gtk.DSL.Core

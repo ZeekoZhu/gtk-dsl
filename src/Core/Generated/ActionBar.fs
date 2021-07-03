@@ -1,4 +1,4 @@
-module GtkDsl.Binding.ActionBar
+module Gtk.DSL.Binding.ActionBar
 open System
 open Gtk
 open Gtk.DSL.Core

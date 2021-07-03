@@ -1,4 +1,4 @@
-module GtkDsl.Binding.Stack
+module Gtk.DSL.Binding.Stack
 open System
 open Gtk
 open Gtk.DSL.Core

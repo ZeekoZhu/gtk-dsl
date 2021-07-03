@@ -1,4 +1,4 @@
-module GtkDsl.Binding.HBox
+module Gtk.DSL.Binding.HBox
 open System
 open Gtk
 open Gtk.DSL.Core

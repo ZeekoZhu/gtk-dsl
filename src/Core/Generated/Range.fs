@@ -1,4 +1,4 @@
-module GtkDsl.Binding.Range
+module Gtk.DSL.Binding.Range
 open System
 open Gtk
 open Gtk.DSL.Core

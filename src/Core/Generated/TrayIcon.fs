@@ -1,4 +1,4 @@
-module GtkDsl.Binding.TrayIcon
+module Gtk.DSL.Binding.TrayIcon
 open System
 open Gtk
 open Gtk.DSL.Core

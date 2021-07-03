@@ -1,4 +1,4 @@
-module GtkDsl.Binding.Image
+module Gtk.DSL.Binding.Image
 open System
 open Gtk
 open Gtk.DSL.Core

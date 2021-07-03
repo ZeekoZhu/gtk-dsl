@@ -1,4 +1,4 @@
-module GtkDsl.Binding.Viewport
+module Gtk.DSL.Binding.Viewport
 open System
 open Gtk
 open Gtk.DSL.Core

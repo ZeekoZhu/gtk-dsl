@@ -1,4 +1,4 @@
-module GtkDsl.Binding.VPaned
+module Gtk.DSL.Binding.VPaned
 open System
 open Gtk
 open Gtk.DSL.Core

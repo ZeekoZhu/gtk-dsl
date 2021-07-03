@@ -1,4 +1,4 @@
-module GtkDsl.Binding.Table
+module Gtk.DSL.Binding.Table
 open System
 open Gtk
 open Gtk.DSL.Core

@@ -1,4 +1,4 @@
-module GtkDsl.Binding.EventBox
+module Gtk.DSL.Binding.EventBox
 open System
 open Gtk
 open Gtk.DSL.Core

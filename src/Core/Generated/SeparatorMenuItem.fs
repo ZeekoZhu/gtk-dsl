@@ -1,4 +1,4 @@
-module GtkDsl.Binding.SeparatorMenuItem
+module Gtk.DSL.Binding.SeparatorMenuItem
 open System
 open Gtk
 open Gtk.DSL.Core

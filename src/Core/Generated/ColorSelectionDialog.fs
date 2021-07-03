@@ -1,4 +1,4 @@
-module GtkDsl.Binding.ColorSelectionDialog
+module Gtk.DSL.Binding.ColorSelectionDialog
 open System
 open Gtk
 open Gtk.DSL.Core

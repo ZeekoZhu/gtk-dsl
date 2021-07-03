@@ -1,4 +1,4 @@
-module GtkDsl.Binding.ScrolledWindow
+module Gtk.DSL.Binding.ScrolledWindow
 open System
 open Gtk
 open Gtk.DSL.Core

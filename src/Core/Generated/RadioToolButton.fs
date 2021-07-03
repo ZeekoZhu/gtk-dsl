@@ -1,4 +1,4 @@
-module GtkDsl.Binding.RadioToolButton
+module Gtk.DSL.Binding.RadioToolButton
 open System
 open Gtk
 open Gtk.DSL.Core

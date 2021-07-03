@@ -1,4 +1,4 @@
-module GtkDsl.Binding.PageSetupUnixDialog
+module Gtk.DSL.Binding.PageSetupUnixDialog
 open System
 open Gtk
 open Gtk.DSL.Core

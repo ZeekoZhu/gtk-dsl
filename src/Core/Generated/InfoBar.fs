@@ -1,4 +1,4 @@
-module GtkDsl.Binding.InfoBar
+module Gtk.DSL.Binding.InfoBar
 open System
 open Gtk
 open Gtk.DSL.Core

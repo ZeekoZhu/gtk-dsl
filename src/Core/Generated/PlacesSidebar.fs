@@ -1,4 +1,4 @@
-module GtkDsl.Binding.PlacesSidebar
+module Gtk.DSL.Binding.PlacesSidebar
 open System
 open Gtk
 open Gtk.DSL.Core

@@ -1,4 +1,4 @@
-module GtkDsl.Binding.Calendar
+module Gtk.DSL.Binding.Calendar
 open System
 open Gtk
 open Gtk.DSL.Core

@@ -1,4 +1,4 @@
-module GtkDsl.Binding.Container
+module Gtk.DSL.Binding.Container
 open System
 open Gtk
 open Gtk.DSL.Core

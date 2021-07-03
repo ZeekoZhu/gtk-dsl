@@ -1,4 +1,4 @@
-module GtkDsl.Binding.ButtonBox
+module Gtk.DSL.Binding.ButtonBox
 open System
 open Gtk
 open Gtk.DSL.Core

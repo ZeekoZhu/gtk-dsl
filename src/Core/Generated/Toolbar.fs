@@ -1,4 +1,4 @@
-module GtkDsl.Binding.Toolbar
+module Gtk.DSL.Binding.Toolbar
 open System
 open Gtk
 open Gtk.DSL.Core

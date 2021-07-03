@@ -1,4 +1,4 @@
-module GtkDsl.Binding.Overlay
+module Gtk.DSL.Binding.Overlay
 open System
 open Gtk
 open Gtk.DSL.Core

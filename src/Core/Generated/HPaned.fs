@@ -1,4 +1,4 @@
-module GtkDsl.Binding.HPaned
+module Gtk.DSL.Binding.HPaned
 open System
 open Gtk
 open Gtk.DSL.Core

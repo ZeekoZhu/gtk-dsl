@@ -1,4 +1,4 @@
-module GtkDsl.Binding.AppChooserButton
+module Gtk.DSL.Binding.AppChooserButton
 open System
 open Gtk
 open Gtk.DSL.Core

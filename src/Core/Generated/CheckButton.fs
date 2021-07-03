@@ -1,4 +1,4 @@
-module GtkDsl.Binding.CheckButton
+module Gtk.DSL.Binding.CheckButton
 open System
 open Gtk
 open Gtk.DSL.Core

@@ -1,4 +1,4 @@
-module GtkDsl.Binding.ListBoxRow
+module Gtk.DSL.Binding.ListBoxRow
 open System
 open Gtk
 open Gtk.DSL.Core

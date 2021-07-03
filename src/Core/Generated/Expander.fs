@@ -1,4 +1,4 @@
-module GtkDsl.Binding.Expander
+module Gtk.DSL.Binding.Expander
 open System
 open Gtk
 open Gtk.DSL.Core

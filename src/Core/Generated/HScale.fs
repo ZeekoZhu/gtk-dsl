@@ -1,4 +1,4 @@
-module GtkDsl.Binding.HScale
+module Gtk.DSL.Binding.HScale
 open System
 open Gtk
 open Gtk.DSL.Core

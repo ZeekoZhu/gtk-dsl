@@ -1,4 +1,4 @@
-module GtkDsl.Binding.ToolItemGroup
+module Gtk.DSL.Binding.ToolItemGroup
 open System
 open Gtk
 open Gtk.DSL.Core

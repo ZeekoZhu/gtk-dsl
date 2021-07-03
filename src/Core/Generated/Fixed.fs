@@ -1,4 +1,4 @@
-module GtkDsl.Binding.Fixed
+module Gtk.DSL.Binding.Fixed
 open System
 open Gtk
 open Gtk.DSL.Core

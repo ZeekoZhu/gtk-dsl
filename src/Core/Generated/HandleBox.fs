@@ -1,4 +1,4 @@
-module GtkDsl.Binding.HandleBox
+module Gtk.DSL.Binding.HandleBox
 open System
 open Gtk
 open Gtk.DSL.Core

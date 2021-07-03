@@ -1,4 +1,4 @@
-module GtkDsl.Binding.TreeView
+module Gtk.DSL.Binding.TreeView
 open System
 open Gtk
 open Gtk.DSL.Core

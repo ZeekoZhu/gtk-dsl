@@ -1,4 +1,4 @@
-module GtkDsl.Binding.Alignment
+module Gtk.DSL.Binding.Alignment
 open System
 open Gtk
 open Gtk.DSL.Core

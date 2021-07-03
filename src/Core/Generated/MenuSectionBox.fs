@@ -1,4 +1,4 @@
-module GtkDsl.Binding.MenuSectionBox
+module Gtk.DSL.Binding.MenuSectionBox
 open System
 open Gtk
 open Gtk.DSL.Core

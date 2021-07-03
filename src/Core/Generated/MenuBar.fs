@@ -1,4 +1,4 @@
-module GtkDsl.Binding.MenuBar
+module Gtk.DSL.Binding.MenuBar
 open System
 open Gtk
 open Gtk.DSL.Core

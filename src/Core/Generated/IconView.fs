@@ -1,4 +1,4 @@
-module GtkDsl.Binding.IconView
+module Gtk.DSL.Binding.IconView
 open System
 open Gtk
 open Gtk.DSL.Core

@@ -1,4 +1,4 @@
-module GtkDsl.Binding.Switch
+module Gtk.DSL.Binding.Switch
 open System
 open Gtk
 open Gtk.DSL.Core

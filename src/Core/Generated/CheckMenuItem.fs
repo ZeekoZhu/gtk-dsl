@@ -1,4 +1,4 @@
-module GtkDsl.Binding.CheckMenuItem
+module Gtk.DSL.Binding.CheckMenuItem
 open System
 open Gtk
 open Gtk.DSL.Core
