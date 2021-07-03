@@ -114,10 +114,7 @@ type BaseContainerDescriptor<'w, 'p when 'w :> Container>
             let childContent = childDesc.Child.Create()
             let childContent = childDesc.Child.Bind(Some childContent)
             holder.Replace(childContent)
-
-
-    interface WidgetDescriptor with
-        member this.Bind(widget: Widget option) = widget.Value
+        container.ShowAll()
 
 [<Extension>]
 type WidgetExtensions() =

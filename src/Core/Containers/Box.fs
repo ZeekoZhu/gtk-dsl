@@ -1,7 +1,8 @@
-module Gtk.DSL.Binding.Box
+module Gtk.DSL.Containers.Box
 
 open Gtk
 open Gtk.DSL.Core
+open Gtk.DSL.Binding
 
 type BoxChildDescriptor(packType: PackType, expand: bool, fill: bool, padding: uint32) =
     interface ChildPropertyDescriptor<Box> with
@@ -13,10 +14,8 @@ type BoxChildDescriptor(packType: PackType, expand: bool, fill: bool, padding: u
 
             pack (child, expand, fill, padding)
 
-type BoxDescriptor(props: Box.BoxProperty seq, children: BoxChildDescriptor seq) =
-    inherit BaseContainerDescriptor<Box, Box.BoxProperty>(props,
-                                                          Box.bindProperty,
-                                                          children |> Seq.cast<ChildDescriptor<Box>>)
+type BoxDescriptor(props: Box.BoxProperty seq, children: ChildDescriptor<Box> seq) =
+    inherit BaseContainerDescriptor<Box, Box.BoxProperty>(props, Box.bindProperty, children)
 
     override this.CreateTyped() = new Box(Orientation.Horizontal, 0)
 
