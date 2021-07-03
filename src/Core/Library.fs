@@ -55,7 +55,7 @@ type BasePropertyBuilder<'p>() =
     member this.Yield(()) = Seq.empty<'p>
     member this.For(items: 't seq, fn: 't -> 'p seq) = items |> Seq.map fn
 
-type ChildPropertyDescriptor<'c when 'c :> Container>() =
+type ChildPropertyDescriptor<'c when 'c :> Container> =
     abstract member AddChild : 'c * #Widget -> unit
 
 type ChildDescriptor<'c when 'c :> Container> =
@@ -97,7 +97,7 @@ type BaseContainerDescriptor<'w, 'p when 'w :> Container>
     (
         props: 'p seq,
         bindProperty: 'w -> 'p -> unit,
-        children: ChildDescriptor<'w> seq
+        children: seq<ChildDescriptor<'w>>
     ) =
     inherit BaseWidgetDescriptor<'w, 'p>(props, bindProperty)
 

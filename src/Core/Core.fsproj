@@ -152,6 +152,7 @@
     <Compile Include="Generated\Revealer.fs" />
     <Compile Include="Generated\VPaned.fs" />
     <Compile Include="Generated\SearchEntry.fs" />
+    <Compile Include="Containers\Box.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
