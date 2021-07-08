@@ -9,6 +9,10 @@ open Gtk
 type DslEvent = { Event: string }
 type DslSymbol = { Value: string }
 
+[<RequireQualifiedAccess>]
+module Symbols =
+    let typeId = { Value = "TypeId" }
+
 let registerListener (widget: Widget) (event: string) (disposable: IDisposable) =
     let event = { Event = event }
 
@@ -19,11 +23,13 @@ let registerListener (widget: Widget) (event: string) (disposable: IDisposable) 
     widget.Data.Add(event, disposable)
 
 type WidgetDescriptor =
+    abstract member WidgetType : DslSymbol
     abstract member Create : unit -> Widget
     abstract member Bind : Widget option -> Widget
 
 [<AbstractClass>]
 type BaseWidgetDescriptor<'w, 'p when 'w :> Widget>(props: 'p seq, bindProperty: 'w -> 'p -> unit) =
+    let typeId = { Value = typeof<'w>.FullName }
     abstract member BindTyped : 'w -> unit
     abstract member CreateTyped : unit -> 'w
     abstract member Bind : widget: Widget option -> Widget
@@ -45,7 +51,9 @@ type BaseWidgetDescriptor<'w, 'p when 'w :> Widget>(props: 'p seq, bindProperty:
         | None -> createNew ()
 
     interface WidgetDescriptor with
-        member this.Create() = this.CreateTyped() :> Widget
+        member this.WidgetType = typeId
+        member this.Create() =
+            this.CreateTyped() :> Widget
 
         member this.Bind(widget: Widget option) = this.Bind(widget)
 
@@ -65,8 +73,9 @@ type ChildDescriptor<'c when 'c :> Container> =
 let componentSymbol = { Value = "Component" }
 let parentSymbol = { Value = "Parent" }
 
-type ChildHolder() =
+type ChildHolder(typeId: DslSymbol) as this =
     inherit Bin()
+    do this.Data.Add(Symbols.typeId, typeId)
 
     member this.Replace(child: #Widget) =
         if this.Child <> null then
@@ -74,23 +83,52 @@ type ChildHolder() =
 
         this.Add(child)
 
-let wrapChild (child: #Widget) =
-    let childHolder = new ChildHolder()
+let wrapChild (child: #Widget) childType =
+    let childHolder = new ChildHolder(childType)
     childHolder.Add(child)
-    childHolder :> Widget
+    childHolder
 
-[<AbstractClass>]
-type ComponentDescriptor<'p when 'p: comparison>(props: Set<'p>) =
-    abstract member Render : props: Set<'p> -> #WidgetDescriptor
+type FunctionalComponent = obj -> WidgetDescriptor
 
-    interface WidgetDescriptor with
-        member this.Create() =
-            let subTree = this.Render(props)
-            subTree.Create()
 
-        member this.Bind(widget: Widget option) =
-            let subTree = this.Render(props)
-            subTree.Bind(widget)
+let patchChildren (container: 'w) (childrenDesc: ChildDescriptor<'w> seq) =
+    let mutable children =
+        container.Children
+        |> Seq.cast<ChildHolder>
+        |> List.ofSeq
+
+    let findChildByTypeId typeId =
+        children
+        |> List.tryFind (fun c -> c.Data.[Symbols.typeId] = typeId)
+
+    for child in children do
+        // detach child from widget tree
+        container.Remove(child)
+
+    for childDesc in childrenDesc do
+        let matchedWidget =
+            findChildByTypeId childDesc.Child.WidgetType
+
+        let child =
+            match matchedWidget with
+            | Some matchedWidget ->
+                // reuse previous widget
+                childDesc.Child.Bind(Some matchedWidget.Child)
+                |> ignore
+
+                children <-
+                    children
+                    |> List.filter (fun x -> x <> matchedWidget)
+
+                matchedWidget
+            | _ ->
+                printfn $"create new widget: {childDesc.Child}"
+                wrapChild (childDesc.Child.Bind(None)) childDesc.Child.WidgetType
+
+        childDesc.ChildProperties.AddChild(container, child)
+
+    for remainsChild in children do
+        remainsChild.Destroy()
 
 [<AbstractClass>]
 type BaseContainerDescriptor<'w, 'p when 'w :> Container>
@@ -104,16 +142,7 @@ type BaseContainerDescriptor<'w, 'p when 'w :> Container>
     override this.BindTyped(widget: 'w) =
         base.BindTyped(widget)
         let container = widget
-
-        container.Children
-        |> Seq.iter (fun x -> x.Destroy())
-
-        for childDesc in children do
-            let holder = new ChildHolder()
-            childDesc.ChildProperties.AddChild(container, holder)
-            let childContent = childDesc.Child.Create()
-            let childContent = childDesc.Child.Bind(Some childContent)
-            holder.Replace(childContent)
+        patchChildren container children
         container.ShowAll()
 
 [<Extension>]

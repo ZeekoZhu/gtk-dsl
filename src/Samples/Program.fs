@@ -1,5 +1,6 @@
 ﻿namespace Samples
 
+open System
 open Gtk.DSL.Core
 open Gtk.DSL.Quotation
 
@@ -18,8 +19,21 @@ module Program =
         Application.Init()
         let updateEvent = Event<_>()
         let mutable count = 0
+        let mutable items : DateTime list = []
+
+        let handleListBtnClick i _ =
+            items <- items |> List.filter (fun x -> x <> i)
+            updateEvent.Trigger()
+
+        let createItem i =
+            packStart
+                (true, true, 0u)
+                (button [ <@ _button.Clicked @> @= handleListBtnClick i ]
+                    (label [ <@ _label.LabelProp @> := $"{i}" ]))
 
         let view () =
+            let labels = items |> Seq.map createItem
+
             (box [ <@ _box.Direction @> := TextDirection.Rtl
                    <@ _box.Orientation @> := Orientation.Vertical ] [
                 packStart
@@ -29,6 +43,7 @@ module Program =
                                      "Hello world!"
                                  else
                                      $"You clicked {count} times") ])
+                yield! labels
                 packStart
                     (false, false, 24u)
                     (button
@@ -37,6 +52,7 @@ module Program =
                           <@ _button.Clicked @>
                           @= (fun _ ->
                               count <- count + 1
+                              items <- DateTime.Now :: items
                               updateEvent.Trigger()) ]
                         (label [ <@ _label.LabelProp @> := count.ToString() ]))
              ])
@@ -44,6 +60,7 @@ module Program =
         let content = (view () :> WidgetDescriptor).Create()
         let update () = view().Bind(Some content) |> ignore
         updateEvent.Publish.Subscribe(update) |> ignore
+
 
         let app =
             new Application("org.Samples.Samples", GLib.ApplicationFlags.None)
