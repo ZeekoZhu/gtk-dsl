@@ -15,8 +15,8 @@ let registerListener (widget: Widget) (event: string) (disposable: IDisposable) 
     if widget.Data.ContainsKey event then
         let prev = widget.Data.[event] :?> IDisposable
         prev.Dispose()
-    else
-        widget.Data.Add(event, disposable)
+        widget.Data.Remove(event)
+    widget.Data.Add(event, disposable)
 
 type WidgetDescriptor =
     abstract member Create : unit -> Widget
