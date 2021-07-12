@@ -11,10 +11,5 @@ let inline add child =
       Child = child }
 
 
-type ButtonDescriptor(props: BindingInfo<Button> seq, children: ChildDescriptor<Button>) =
-    inherit BaseContainerDescriptor<Button, BindingInfo<Button>>(props, bindProperty, Seq.singleton children)
-
-    override this.CreateTyped() = new Button()
-
-
-let button props child = ButtonDescriptor(props, (add child))
+let button props child =
+    containerWidget bindProperty (fun () -> new Button()) (props, add child |> Seq.singleton)

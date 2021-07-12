@@ -5,12 +5,14 @@ open Gtk
 
 
 
+type VoidCallback = unit -> unit
 type DslEvent = { Event: string }
 type DslSymbol = { Value: string }
 
 [<RequireQualifiedAccess>]
 module Symbols =
-    let typeId = { Value = "TypeId" }
+    let typeId = { Value = "DSL:TypeId" }
+    let dslComp = { Value = "DSL:Component" }
 
 let registerListener (widget: Widget) (event: string) (disposable: IDisposable) =
     let event = { Event = event }
@@ -25,35 +27,36 @@ let registerListener (widget: Widget) (event: string) (disposable: IDisposable) 
 type WidgetDescriptor =
     abstract member WidgetType : DslSymbol
     abstract member Bind : Widget option -> Widget
+    abstract member OnDestroy : Widget -> unit
 
-[<AbstractClass>]
-type BaseWidgetDescriptor<'w, 'p when 'w :> Widget>(props: 'p seq, bindProperty: 'w -> 'p -> unit) =
+type WidgetDescriptor2 =
+    { WidgetType: DslSymbol
+      PatchWidget: Widget option -> Widget
+      OnDestroy: Widget -> unit }
+
+let baseWidget<'w, 'p when 'w :> Widget> (bindProperty: 'w -> 'p -> unit) (create: unit -> 'w) (props: 'p seq) =
     let typeId = { Value = typeof<'w>.FullName }
-    abstract member BindTyped : 'w -> unit
-    abstract member CreateTyped : unit -> 'w
-    abstract member Bind : widget: Widget option -> Widget
-    default this.BindTyped(widget: 'w) = props |> Seq.iter (bindProperty widget)
 
-    default this.Bind(widget: Widget option) =
+    let patchWidget (widget: Widget option) =
+        let patchWidget widget = props |> Seq.iter (bindProperty widget)
+
         let createNew () =
-            let w = this.CreateTyped()
-            this.BindTyped(w)
+            let w = create ()
+            patchWidget w
             w :> Widget
 
         match widget with
         | Some widget ->
             match widget with
             | :? 'w as w ->
-                this.BindTyped(w)
+                patchWidget w
                 w :> Widget
             | _ -> createNew ()
         | None -> createNew ()
 
-    interface WidgetDescriptor with
-        member this.WidgetType = typeId
-
-        member this.Bind(widget: Widget option) = this.Bind(widget)
-
+    { WidgetType = typeId
+      PatchWidget = patchWidget
+      OnDestroy = ignore }
 
 
 type BasePropertyBuilder<'p>() =
@@ -65,7 +68,7 @@ type ChildPropertyDescriptor<'c when 'c :> Container> =
 
 type ChildDescriptor<'c when 'c :> Container> =
     { ChildProperties: ChildPropertyDescriptor<'c>
-      Child: WidgetDescriptor }
+      Child: WidgetDescriptor2 }
 
 let componentSymbol = { Value = "Component" }
 let parentSymbol = { Value = "Parent" }
@@ -110,7 +113,7 @@ let patchChildren (container: 'w) (childrenDesc: ChildDescriptor<'w> seq) =
             match matchedWidget with
             | Some matchedWidget ->
                 // reuse previous widget
-                childDesc.Child.Bind(Some matchedWidget.Child)
+                childDesc.Child.PatchWidget(Some matchedWidget.Child)
                 |> ignore
 
                 children <-
@@ -120,34 +123,31 @@ let patchChildren (container: 'w) (childrenDesc: ChildDescriptor<'w> seq) =
                 matchedWidget
             | _ ->
                 printfn $"create new widget: {childDesc.Child.WidgetType.Value}"
-                wrapChild (childDesc.Child.Bind(None)) childDesc.Child.WidgetType
+                wrapChild (childDesc.Child.PatchWidget(None)) childDesc.Child.WidgetType
 
         childDesc.ChildProperties.AddChild(container, child)
 
     for remainsChild in children do
         remainsChild.Destroy()
 
-[<AbstractClass>]
-type BaseContainerDescriptor<'w, 'p when 'w :> Container>
-    (
-        props: 'p seq,
-        bindProperty: 'w -> 'p -> unit,
-        children: seq<ChildDescriptor<'w>>
-    ) =
-    inherit BaseWidgetDescriptor<'w, 'p>(props, bindProperty)
+let containerWidget<'w, 'p when 'w :> Container>
+    (bindProperty: 'w -> 'p -> unit)
+    (create: unit -> 'w)
+    (props: 'p seq, children: seq<ChildDescriptor<'w>>)
+    =
+    let widgetBase = baseWidget bindProperty create props
 
-    override this.BindTyped(widget: 'w) =
-        base.BindTyped(widget)
-        let container = widget
+    let patchWidget widget =
+        let container = widgetBase.PatchWidget widget :?> 'w
         patchChildren container children
         container.ShowAll()
+        container :> Widget
 
-type StatelessComponent<'p, 'w when 'w :> WidgetDescriptor>(render: 'p -> 'w, props: 'p) =
-    let dsl = lazy (render props)
+    { widgetBase with
+          PatchWidget = patchWidget }
 
-    interface WidgetDescriptor with
-        member this.WidgetType = { Value = render.GetType().FullName }
-        member this.Bind(widget) = dsl.Value.Bind(widget)
 
-let stateless render props =
-    StatelessComponent(render, props) :> WidgetDescriptor
+let stateless (render: 'p -> WidgetDescriptor2) props =
+    let typeId = { Value = render.GetType().FullName }
+    let desc = render props
+    { desc with WidgetType = typeId }

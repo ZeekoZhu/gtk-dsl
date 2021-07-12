@@ -14,12 +14,8 @@ type BoxChildDescriptor(packType: PackType, expand: bool, fill: bool, padding: u
 
             pack (child, expand, fill, padding)
 
-type BoxDescriptor(props: BindingInfo<Box> seq, children: ChildDescriptor<Box> seq) =
-    inherit BaseContainerDescriptor<Box, BindingInfo<Box>>(props, bindProperty, children)
-
-    override this.CreateTyped() = new Box(Orientation.Horizontal, 0)
-
-let box props children = BoxDescriptor(props, children)
+let box props children =
+    containerWidget bindProperty (fun () -> new Box(Orientation.Horizontal, 0)) (props, children)
 
 let packStart (expand, fill, padding) child =
     { ChildProperties = BoxChildDescriptor(PackType.Start, expand, fill, padding)
@@ -28,5 +24,3 @@ let packStart (expand, fill, padding) child =
 let packEnd (expand, fill, padding) child =
     { ChildProperties = BoxChildDescriptor(PackType.End, expand, fill, padding)
       Child = child }
-
-
