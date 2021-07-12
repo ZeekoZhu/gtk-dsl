@@ -1,7 +1,6 @@
 ﻿module Gtk.DSL.Core
 
 open System
-open System.Runtime.CompilerServices
 open Gtk
 
 
@@ -20,6 +19,7 @@ let registerListener (widget: Widget) (event: string) (disposable: IDisposable) 
         let prev = widget.Data.[event] :?> IDisposable
         prev.Dispose()
         widget.Data.Remove(event)
+
     widget.Data.Add(event, disposable)
 
 type WidgetDescriptor =
@@ -52,8 +52,7 @@ type BaseWidgetDescriptor<'w, 'p when 'w :> Widget>(props: 'p seq, bindProperty:
 
     interface WidgetDescriptor with
         member this.WidgetType = typeId
-        member this.Create() =
-            this.CreateTyped() :> Widget
+        member this.Create() = this.CreateTyped() :> Widget
 
         member this.Bind(widget: Widget option) = this.Bind(widget)
 
@@ -122,7 +121,7 @@ let patchChildren (container: 'w) (childrenDesc: ChildDescriptor<'w> seq) =
 
                 matchedWidget
             | _ ->
-                printfn $"create new widget: {childDesc.Child}"
+                printfn $"create new widget: {childDesc.Child.WidgetType.Value}"
                 wrapChild (childDesc.Child.Bind(None)) childDesc.Child.WidgetType
 
         childDesc.ChildProperties.AddChild(container, child)
@@ -145,31 +144,12 @@ type BaseContainerDescriptor<'w, 'p when 'w :> Container>
         patchChildren container children
         container.ShowAll()
 
-[<Extension>]
-type WidgetExtensions() =
-    [<Extension>]
-    static member DSLDestroy(widget: Widget) =
-        let comp = widget.Data.Item componentSymbol
+type StatelessComponent<'p, 'w when 'w :> WidgetDescriptor>(render: 'p -> 'w, props: 'p) =
+    let dsl = lazy (render props)
 
-        match comp with
-        | :? IDisposable as dis -> dis.Dispose()
-        | _ -> widget.Destroy()
+    interface WidgetDescriptor with
+        member this.WidgetType = { Value = render.GetType().FullName }
+        member this.Create() = dsl.Value.Create()
+        member this.Bind(widget) = dsl.Value.Bind(widget)
 
-[<AbstractClass>]
-type StatefulComponent() =
-    let mutable widget : Widget = null
-    abstract member Render : unit -> #WidgetDescriptor
-    abstract member OnInit : unit -> unit
-    abstract member OnUpdate : unit -> bool
-    abstract member OnDestroy : unit -> unit
-
-    member private this.Update() = if this.OnUpdate() then ()
-
-    member this.SetState(fn: unit -> unit) =
-        fn ()
-        this.Update()
-
-    interface IDisposable with
-        member this.Dispose() =
-            this.OnDestroy()
-            if widget <> null then widget.Destroy()
+let stateless render props = StatelessComponent(render, props) :> WidgetDescriptor

@@ -13,6 +13,12 @@ module Program =
     open Gtk.DSL.Widgets.VoidWidgets
     open Gtk.DSL.Widgets.Bin
 
+    let textButton =
+        fun (text, onClick) ->
+            button [ <@ _button.Clicked @> @= onClick ]
+            <| label [ <@ _label.LabelProp @> := text ]
+        |> stateless
+
 
     [<EntryPoint>]
     let main argv =
@@ -26,10 +32,7 @@ module Program =
             updateEvent.Trigger()
 
         let createItem i =
-            packStart
-                (true, true, 0u)
-                (button [ <@ _button.Clicked @> @= handleListBtnClick i ]
-                    (label [ <@ _label.LabelProp @> := $"{i}" ]))
+            packStart (true, true, 0u) (textButton ($"{i}", (handleListBtnClick i)))
 
         let view () =
             let labels = items |> Seq.map createItem
