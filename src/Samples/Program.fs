@@ -32,31 +32,35 @@ module Program =
             updateEvent.Trigger()
 
         let createItem i =
-            packStart (true, true, 0u) (textButton ($"{i}", (handleListBtnClick i)))
+            packStart (true, true, 0u)
+            <| textButton ($"{i}", (handleListBtnClick i))
 
         let view () =
             let labels = items |> Seq.map createItem
 
+            let buttonText =
+                (if count = 0 then
+                     "Hello world!"
+                 else
+                     $"You clicked {count} times")
+
+            let handleCountBtnClick _ =
+                count <- count + 1
+                items <- DateTime.Now :: items
+                updateEvent.Trigger()
+
             (box [ <@ _box.Direction @> := TextDirection.Rtl
                    <@ _box.Orientation @> := Orientation.Vertical ] [
-                packStart
-                    (true, true, 0u)
-                    (label [ <@ _label.LabelProp @>
-                             := (if count = 0 then
-                                     "Hello world!"
-                                 else
-                                     $"You clicked {count} times") ])
+
+                packStart (true, true, 0u) (label [ <@ _label.LabelProp @> := buttonText ])
                 yield! labels
+
                 packStart
                     (false, false, 24u)
                     (button
                         [ <@ _button.MarginStart @> := 12
                           <@ _button.MarginEnd @> := 12
-                          <@ _button.Clicked @>
-                          @= (fun _ ->
-                              count <- count + 1
-                              items <- DateTime.Now :: items
-                              updateEvent.Trigger()) ]
+                          <@ _button.Clicked @> @= handleCountBtnClick ]
                         (label [ <@ _label.LabelProp @> := count.ToString() ]))
              ])
 
