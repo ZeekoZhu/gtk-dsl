@@ -64,7 +64,7 @@ module Program =
                         (label [ <@ _label.LabelProp @> := count.ToString() ]))
              ])
 
-        let content = (view () :> WidgetDescriptor).Create()
+        let content = (view () :> WidgetDescriptor).Bind(None)
         let update () = view().Bind(Some content) |> ignore
         updateEvent.Publish.Subscribe(update) |> ignore
 

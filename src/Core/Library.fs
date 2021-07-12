@@ -24,7 +24,6 @@ let registerListener (widget: Widget) (event: string) (disposable: IDisposable) 
 
 type WidgetDescriptor =
     abstract member WidgetType : DslSymbol
-    abstract member Create : unit -> Widget
     abstract member Bind : Widget option -> Widget
 
 [<AbstractClass>]
@@ -52,7 +51,6 @@ type BaseWidgetDescriptor<'w, 'p when 'w :> Widget>(props: 'p seq, bindProperty:
 
     interface WidgetDescriptor with
         member this.WidgetType = typeId
-        member this.Create() = this.CreateTyped() :> Widget
 
         member this.Bind(widget: Widget option) = this.Bind(widget)
 
@@ -149,7 +147,7 @@ type StatelessComponent<'p, 'w when 'w :> WidgetDescriptor>(render: 'p -> 'w, pr
 
     interface WidgetDescriptor with
         member this.WidgetType = { Value = render.GetType().FullName }
-        member this.Create() = dsl.Value.Create()
         member this.Bind(widget) = dsl.Value.Bind(widget)
 
-let stateless render props = StatelessComponent(render, props) :> WidgetDescriptor
+let stateless render props =
+    StatelessComponent(render, props) :> WidgetDescriptor
