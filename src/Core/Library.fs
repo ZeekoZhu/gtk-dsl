@@ -1,6 +1,7 @@
 ﻿module Gtk.DSL.Core
 
 open System
+open System.Collections.Generic
 open Gtk
 
 
@@ -31,8 +32,7 @@ type WidgetDescriptor =
 
 type WidgetDescriptor2 =
     { WidgetType: DslSymbol
-      PatchWidget: Widget option -> Widget
-      OnDestroy: Widget -> unit }
+      PatchWidget: Widget option -> Widget }
 
 let baseWidget<'w, 'p when 'w :> Widget> (bindProperty: 'w -> 'p -> unit) (create: unit -> 'w) (props: 'p seq) =
     let typeId = { Value = typeof<'w>.FullName }
@@ -55,8 +55,7 @@ let baseWidget<'w, 'p when 'w :> Widget> (bindProperty: 'w -> 'p -> unit) (creat
         | None -> createNew ()
 
     { WidgetType = typeId
-      PatchWidget = patchWidget
-      OnDestroy = ignore }
+      PatchWidget = patchWidget }
 
 
 type BasePropertyBuilder<'p>() =
@@ -146,8 +145,51 @@ let containerWidget<'w, 'p when 'w :> Container>
     { widgetBase with
           PatchWidget = patchWidget }
 
+type ComponentFeatures =
+    { OnCreated: VoidCallback
+      OnDestroy: VoidCallback }
 
-let stateless (render: 'p -> WidgetDescriptor2) props =
+type ComponentContext() =
+    let onCreated = List<VoidCallback>()
+
+    let runCallbacks callbacks =
+        fun () -> callbacks |> Seq.iter (fun fn -> fn ())
+
+    let onDestroy = List<VoidCallback>()
+    member this.OnCreated fn = onCreated.Add fn
+    member this.OnDestroy fn = onDestroy.Add fn
+
+    member this.Build() =
+        { OnCreated = runCallbacks onCreated
+          OnDestroy = runCallbacks onDestroy }
+
+let saveComponentFeatures (widget: #Widget) (features: ComponentFeatures) =
+    widget.Data.[Symbols.dslComp] <- (features :> obj)
+
+let getComponentFeatures (widget: #Widget) =
+    match widget.Data.[Symbols.dslComp] with
+    | :? ComponentFeatures as features -> features
+    | _ -> failwith $"{widget.GetType().FullName} is not created by a component"
+
+let stateless (render: 'p -> ComponentContext -> WidgetDescriptor2) props =
     let typeId = { Value = render.GetType().FullName }
-    let desc = render props
-    { desc with WidgetType = typeId }
+
+    let patchWidget =
+        function
+        | None ->
+            let ctx = ComponentContext()
+            let desc = render props ctx
+            let features = ctx.Build()
+            let widget = desc.PatchWidget None
+            saveComponentFeatures widget features
+            // on created hook
+            features.OnCreated()
+            widget
+        | Some w ->
+            let ctx = ComponentContext()
+            let desc = render props ctx
+            desc.PatchWidget(Some w)
+
+
+    { WidgetType = typeId
+      PatchWidget = patchWidget }

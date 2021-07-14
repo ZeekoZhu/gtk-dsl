@@ -14,7 +14,10 @@ module Program =
     open Gtk.DSL.Widgets.Bin
 
     let textButton =
-        fun (text, onClick) ->
+        fun (text, onClick) (ctx: ComponentContext) ->
+            ctx.OnCreated(fun () -> printfn "text button created" )
+            ctx.OnDestroy(fun () -> printfn "text button destroyed" )
+
             button [ <@ _button.Clicked @> @= onClick ]
             <| label [ <@ _label.LabelProp @> := text ]
         |> stateless
