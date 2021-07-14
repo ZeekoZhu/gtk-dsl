@@ -15,6 +15,26 @@ module Symbols =
     let typeId = { Value = "DSL:TypeId" }
     let dslComp = { Value = "DSL:Component" }
 
+
+type ComponentFeatures =
+    { OnCreated: VoidCallback
+      OnDestroy: VoidCallback }
+
+let setNodeType (widget: #Widget) (typeId: DslSymbol) = widget.Data.[Symbols.typeId] <- typeId
+
+let getNodeType (widget: #Widget) =
+    match widget.Data.[Symbols.typeId] with
+    | :? DslSymbol as typeId -> typeId
+    | _ -> failwith $"{widget.GetType().FullName} is not created by dsl functions"
+
+let setComponentFeatures (widget: #Widget) (features: ComponentFeatures) =
+    widget.Data.[Symbols.dslComp] <- (features :> obj)
+
+let getComponentFeatures (widget: #Widget) =
+    match widget.Data.[Symbols.dslComp] with
+    | :? ComponentFeatures as features -> Some features
+    | _ -> None
+
 let registerListener (widget: Widget) (event: string) (disposable: IDisposable) =
     let event = { Event = event }
 
@@ -31,7 +51,7 @@ type WidgetDescriptor =
     abstract member OnDestroy : Widget -> unit
 
 type WidgetDescriptor2 =
-    { WidgetType: DslSymbol
+    { NodeType: DslSymbol
       PatchWidget: Widget option -> Widget }
 
 let baseWidget<'w, 'p when 'w :> Widget> (bindProperty: 'w -> 'p -> unit) (create: unit -> 'w) (props: 'p seq) =
@@ -54,7 +74,7 @@ let baseWidget<'w, 'p when 'w :> Widget> (bindProperty: 'w -> 'p -> unit) (creat
             | _ -> createNew ()
         | None -> createNew ()
 
-    { WidgetType = typeId
+    { NodeType = typeId
       PatchWidget = patchWidget }
 
 
@@ -74,7 +94,15 @@ let parentSymbol = { Value = "Parent" }
 
 type ChildHolder(typeId: DslSymbol) as this =
     inherit Bin()
-    do this.Data.Add(Symbols.typeId, typeId)
+    do setNodeType this typeId
+
+    override this.Destroy() =
+        // hooks on destroy
+        match getComponentFeatures this.Child with
+        | Some features -> features.OnDestroy()
+        | None -> ()
+
+        base.Destroy()
 
     member this.Replace(child: #Widget) =
         if this.Child <> null then
@@ -98,7 +126,7 @@ let patchChildren (container: 'w) (childrenDesc: ChildDescriptor<'w> seq) =
 
     let findChildByTypeId typeId =
         children
-        |> List.tryFind (fun c -> c.Data.[Symbols.typeId] = typeId)
+        |> List.tryFind (fun c -> getNodeType c = typeId)
 
     for child in children do
         // detach child from widget tree
@@ -106,7 +134,7 @@ let patchChildren (container: 'w) (childrenDesc: ChildDescriptor<'w> seq) =
 
     for childDesc in childrenDesc do
         let matchedWidget =
-            findChildByTypeId childDesc.Child.WidgetType
+            findChildByTypeId childDesc.Child.NodeType
 
         let child =
             match matchedWidget with
@@ -121,8 +149,8 @@ let patchChildren (container: 'w) (childrenDesc: ChildDescriptor<'w> seq) =
 
                 matchedWidget
             | _ ->
-                printfn $"create new widget: {childDesc.Child.WidgetType.Value}"
-                wrapChild (childDesc.Child.PatchWidget(None)) childDesc.Child.WidgetType
+                printfn $"create new widget: {childDesc.Child.NodeType.Value}"
+                wrapChild (childDesc.Child.PatchWidget(None)) childDesc.Child.NodeType
 
         childDesc.ChildProperties.AddChild(container, child)
 
@@ -145,10 +173,6 @@ let containerWidget<'w, 'p when 'w :> Container>
     { widgetBase with
           PatchWidget = patchWidget }
 
-type ComponentFeatures =
-    { OnCreated: VoidCallback
-      OnDestroy: VoidCallback }
-
 type ComponentContext() =
     let onCreated = List<VoidCallback>()
 
@@ -163,13 +187,6 @@ type ComponentContext() =
         { OnCreated = runCallbacks onCreated
           OnDestroy = runCallbacks onDestroy }
 
-let saveComponentFeatures (widget: #Widget) (features: ComponentFeatures) =
-    widget.Data.[Symbols.dslComp] <- (features :> obj)
-
-let getComponentFeatures (widget: #Widget) =
-    match widget.Data.[Symbols.dslComp] with
-    | :? ComponentFeatures as features -> features
-    | _ -> failwith $"{widget.GetType().FullName} is not created by a component"
 
 let stateless (render: 'p -> ComponentContext -> WidgetDescriptor2) props =
     let typeId = { Value = render.GetType().FullName }
@@ -181,8 +198,8 @@ let stateless (render: 'p -> ComponentContext -> WidgetDescriptor2) props =
             let desc = render props ctx
             let features = ctx.Build()
             let widget = desc.PatchWidget None
-            saveComponentFeatures widget features
-            // on created hook
+            setComponentFeatures widget features
+            // hook onCreated
             features.OnCreated()
             widget
         | Some w ->
@@ -191,5 +208,5 @@ let stateless (render: 'p -> ComponentContext -> WidgetDescriptor2) props =
             desc.PatchWidget(Some w)
 
 
-    { WidgetType = typeId
+    { NodeType = typeId
       PatchWidget = patchWidget }
