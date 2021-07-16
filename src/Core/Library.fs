@@ -46,11 +46,6 @@ let registerListener (widget: Widget) (event: string) (disposable: IDisposable) 
     widget.Data.Add(event, disposable)
 
 type WidgetDescriptor =
-    abstract member WidgetType : DslSymbol
-    abstract member Bind : Widget option -> Widget
-    abstract member OnDestroy : Widget -> unit
-
-type WidgetDescriptor2 =
     { NodeType: DslSymbol
       PatchWidget: Widget option -> Widget }
 
@@ -75,7 +70,8 @@ let baseWidget<'w, 'p when 'w :> Widget> (bindProperty: 'w -> 'p -> unit) (creat
         | None -> createNew ()
 
     { NodeType = typeId
-      PatchWidget = patchWidget }
+      PatchWidget = patchWidget
+    }
 
 
 type BasePropertyBuilder<'p>() =
@@ -87,7 +83,7 @@ type ChildPropertyDescriptor<'c when 'c :> Container> =
 
 type ChildDescriptor<'c when 'c :> Container> =
     { ChildProperties: ChildPropertyDescriptor<'c>
-      Child: WidgetDescriptor2 }
+      Child: WidgetDescriptor }
 
 let componentSymbol = { Value = "Component" }
 let parentSymbol = { Value = "Parent" }
@@ -114,8 +110,6 @@ let wrapChild (child: #Widget) childType =
     let childHolder = new ChildHolder(childType)
     childHolder.Add(child)
     childHolder
-
-type FunctionalComponent = obj -> WidgetDescriptor
 
 
 let patchChildren (container: 'w) (childrenDesc: ChildDescriptor<'w> seq) =
@@ -188,7 +182,7 @@ type ComponentContext() =
           OnDestroy = runCallbacks onDestroy }
 
 
-let stateless (render: 'p -> ComponentContext -> WidgetDescriptor2) props =
+let stateless (render: 'p -> ComponentContext -> WidgetDescriptor) props =
     let typeId = { Value = render.GetType().FullName }
 
     let patchWidget =
