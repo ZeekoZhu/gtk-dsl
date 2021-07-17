@@ -14,7 +14,7 @@ type BoxChildDescriptor(packType: PackType, expand: bool, fill: bool, padding: u
 
             pack (child, expand, fill, padding)
 
-let box props children =
+let gtkBox props children =
     containerWidget bindProperty (fun () -> new Box(Orientation.Horizontal, 0)) (props, children)
 
 let packStart (expand, fill, padding) child =

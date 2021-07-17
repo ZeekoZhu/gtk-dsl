@@ -15,65 +15,31 @@ module Program =
 
     let textButton =
         fun (text, onClick) (ctx: ComponentContext) ->
-            ctx.OnCreated(fun () -> printfn "text button created" )
-            ctx.OnDestroy(fun () -> printfn "text button destroyed" )
+            ctx.OnCreated(fun () -> printfn "text button created")
+            ctx.OnDestroy(fun () -> printfn "text button destroyed")
 
             button [ <@ _button.Clicked @> @= onClick ]
             <| label [ <@ _label.LabelProp @> := text ]
-        |> stateless
+        |> statefullComponent
 
+    let mainWindow =
+        fun () (ctx: ComponentContext) ->
+            let cnt, setCnt = ctx.UseState 0
+
+            gtkBox [ <@ _box.Orientation @> := Orientation.Horizontal
+                     <@ _box.Valign @> := Align.Center
+                     <@ _box.Halign @> := Align.Center ] [
+                packStart (false, false, 24u) (textButton ("-", (fun _ -> setCnt (cnt - 1))))
+                packStart (false, false, 24u) (label [ <@ _label.LabelProp @> := cnt.ToString() ])
+                packStart (false, false, 24u) (textButton ("+", (fun _ -> setCnt (cnt + 1))))
+            ]
+        |> statefullComponent
 
     [<EntryPoint>]
     let main argv =
         Application.Init()
-        let updateEvent = Event<_>()
-        let mutable count = 0
-        let mutable items : DateTime list = []
 
-        let handleListBtnClick i _ =
-            items <- items |> List.filter (fun x -> x <> i)
-            updateEvent.Trigger()
-
-        let createItem i =
-            packStart (true, true, 0u)
-            <| textButton ($"{i}", (handleListBtnClick i))
-
-        let view () =
-            let labels = items |> Seq.map createItem
-
-            let buttonText =
-                (if count = 0 then
-                     "Hello world!"
-                 else
-                     $"You clicked {count} times")
-
-            let handleCountBtnClick _ =
-                count <- count + 1
-                items <- DateTime.Now :: items
-                updateEvent.Trigger()
-
-            (box [ <@ _box.Direction @> := TextDirection.Rtl
-                   <@ _box.Orientation @> := Orientation.Vertical ] [
-
-                packStart (true, true, 0u) (label [ <@ _label.LabelProp @> := buttonText ])
-                yield! labels
-
-                packStart
-                    (false, false, 24u)
-                    (button
-                        [ <@ _button.MarginStart @> := 12
-                          <@ _button.MarginEnd @> := 12
-                          <@ _button.Clicked @> @= handleCountBtnClick ]
-                        (label [ <@ _label.LabelProp @> := count.ToString() ]))
-             ])
-
-        let content = (view ()).PatchWidget(None)
-
-        let update () =
-            view().PatchWidget(Some content) |> ignore
-
-        updateEvent.Publish.Subscribe(update) |> ignore
-
+        let view = mainWindow ()
 
         let app =
             new Application("org.Samples.Samples", GLib.ApplicationFlags.None)
@@ -81,9 +47,7 @@ module Program =
         app.Register(GLib.Cancellable.Current) |> ignore
 
         let win = new Window("Samples")
-        win.Add(content)
-        updateEvent.Trigger()
-        win.ShowAll()
+        mount win view
         app.AddWindow(win)
 
         win.Destroyed.Subscribe(fun _ -> Application.Quit())
