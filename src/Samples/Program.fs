@@ -1,7 +1,7 @@
 ﻿namespace Samples
 
-open System
 open Gtk.DSL.Core
+open Gtk.DSL.Component
 open Gtk.DSL.Quotation
 
 

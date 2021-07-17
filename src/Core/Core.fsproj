@@ -7,11 +7,13 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Library.fs" />
+    <Compile Include="Component.fs" />
     <Compile Include="Quotation.fs" />
     <Compile Include="Widgets\Box.fs" />
     <Compile Include="Widgets\VoidWidgets.fs" />
     <Compile Include="Widgets\Bin.fs" />
     <Compile Include="Widgets\Quote.fs" />
+    <Content Include="paket.references" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
