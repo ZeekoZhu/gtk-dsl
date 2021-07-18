@@ -6,8 +6,8 @@
     <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Tests.fs" />
-    <Compile Include="Program.fs" />
+    <Compile Include="Moq.fs" />
+    <Compile Include="RegisterListener.fs" />
     <Content Include="paket.references" />
   </ItemGroup>
   <ItemGroup>

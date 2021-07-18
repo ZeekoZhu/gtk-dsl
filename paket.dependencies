@@ -6,4 +6,5 @@ nuget FSharp.Quotations.Evaluator
 nuget FsUnit.xUnit
 nuget GTKSharp
 nuget Humanizer.Core
+nuget Moq
 nuget xUnit
