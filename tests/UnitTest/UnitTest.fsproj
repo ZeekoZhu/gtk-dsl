@@ -6,6 +6,7 @@
     <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Gtk.fs" />
     <Compile Include="Moq.fs" />
     <Compile Include="RegisterListener.fs" />
     <Compile Include="BaseWidget.fs" />
