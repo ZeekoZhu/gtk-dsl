@@ -39,20 +39,22 @@ let baseWidget<'w, 'p when 'w :> Widget> (bindProperty: 'w -> 'p -> unit) (creat
     let typeId = { Value = typeof<'w>.FullName }
 
     let patchWidget (widget: Widget option) =
-        let patchWidget widget = props |> Seq.iter (bindProperty widget)
+        let setProperties widget = props |> Seq.iter (bindProperty widget)
 
         let createNew () =
             let w = create ()
-            patchWidget w
+            setProperties w
             w :> Widget
 
         match widget with
         | Some widget ->
             match widget with
             | :? 'w as w ->
-                patchWidget w
+                setProperties w
                 w :> Widget
-            | _ -> createNew ()
+            | _ ->
+                failwith
+                    $"try to update widget of type {widget.GetType().FullName} with descriptor of type {typeId.Value}"
         | None ->
             let widget = createNew ()
             setNodeType widget typeId
