@@ -6,6 +6,7 @@
     <RootNamespace>Gtk.DSL.Core</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="MutableLookup.fs" />
     <Compile Include="Library.fs" />
     <Compile Include="Component.fs" />
     <Compile Include="Quotation.fs" />

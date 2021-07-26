@@ -2,6 +2,7 @@
 
 open System
 open Gtk
+open Gtk.DSL.MutableLookup
 
 type VoidCallback = unit -> unit
 type DslEvent = { Event: string }
@@ -73,43 +74,40 @@ type ChildDescriptor<'c when 'c :> Container> =
 let componentSymbol = { Value = "Component" }
 let parentSymbol = { Value = "Parent" }
 
-let patchChildren (container: 'w) (childrenDesc: ChildDescriptor<'w> seq) =
-    let mutable children = container.Children |> List.ofSeq
+type PatchChildrenAction<'c when 'c :> Container> =
+    | Add of ChildDescriptor<'c> * Widget option
+    | Remove of Widget
 
-    let findChildByTypeId typeId =
-        children
-        |> List.tryFind (fun c -> getNodeType c = typeId)
-
-    for child in children do
+let patchContainer (c: #Container) (patches: PatchChildrenAction<#Container> seq) =
+    for child in c.Children do
         // detach child from widget tree
-        container.Remove(child)
+        c.Remove(child)
 
-    for childDesc in childrenDesc do
-        let matchedWidget =
-            findChildByTypeId childDesc.Child.NodeType
+    let patch =
+        function
+        | Add (desc, widget) ->
+            let widget = desc.Child.PatchWidget widget
+            desc.ChildProperties.AddChild(c, widget)
+        | Remove widget -> widget.Destroy()
 
-        let child =
-            match matchedWidget with
-            | Some matchedWidget ->
-                // reuse previous widget
-                childDesc.Child.PatchWidget(Some matchedWidget)
-                |> ignore
+    for action in patches do
+        patch action
 
-                // todo: optimize with set
-                children <-
-                    children
-                    |> List.filter (fun x -> x <> matchedWidget)
+let private createPatchActions (children: Widget []) (descriptors: ChildDescriptor<'w> seq) =
+    let lookup = MutableLookup(children, getNodeType)
 
-                matchedWidget
-            | _ ->
-                printfn $"create new widget: {childDesc.Child.NodeType.Value}"
-                childDesc.Child.PatchWidget(None)
+    seq {
+        for descriptor in descriptors do
+            let existing = lookup.TryPop descriptor.Child.NodeType
+            Add(descriptor, existing)
 
-        childDesc.ChildProperties.AddChild(container, child)
+        for previous in lookup do
+            Remove previous
+    }
 
-    // destroy unused child
-    for remainsChild in children do
-        remainsChild.Destroy()
+let patchChildren (container: 'w) (childrenDesc: ChildDescriptor<'w> seq) =
+    createPatchActions container.Children childrenDesc
+    |> patchContainer container
 
 let containerWidget<'w, 'p when 'w :> Container>
     (bindProperty: 'w -> 'p -> unit)

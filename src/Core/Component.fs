@@ -125,7 +125,8 @@ let statefullComponent (render: 'p -> ComponentContext -> WidgetDescriptor) prop
             match (getComponentFeatures w), w with
             | Some features, (:? ComponentHost as host) ->
                 features.State.OnSetState((update features host) >> ignore)
-                update features host ()
+                update features host () |> ignore
+                host :> Widget
             | _, _ -> failwith "it is not a component"
 
 
