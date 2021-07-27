@@ -11,7 +11,7 @@ type StateStore() =
     let reset () = idx <- 0
     let onSetState = Event<unit>()
     let mutable setStateHandler = ignore
-    do onSetState.Publish.Add(fun () -> setStateHandler ())
+    do onSetState.Publish.Add(fun () -> gtkMainThreadAgent.OnNext(setStateHandler))
     /// register setState callback
     /// the callback will be called when `setState` is called
     member this.OnSetState fn = setStateHandler <- fn

@@ -7,4 +7,5 @@ nuget FsUnit.xUnit
 nuget GTKSharp
 nuget Humanizer.Core
 nuget Moq
+nuget System.Reactive
 nuget xUnit

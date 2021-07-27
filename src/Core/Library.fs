@@ -1,6 +1,8 @@
 ﻿module Gtk.DSL.Core
 
 open System
+open System.Reactive.Subjects
+open System.Reactive.Linq
 open Gtk
 open Gtk.DSL.MutableLookup
 
@@ -13,6 +15,17 @@ module Symbols =
     let typeId = { Value = "DSL:TypeId" }
     let dslComp = { Value = "DSL:Component" }
 
+let gtkMainThreadAgent = new Subject<VoidCallback>()
+
+let dslLoop =
+    (gtkMainThreadAgent :> IObservable<_>)
+        // todo
+        .Buffer(
+            TimeSpan.FromMilliseconds(5.0)
+        )
+        .Subscribe(fun fn -> Application.Invoke(EventHandler(fun _ _ -> fn |> Seq.iter (fun x -> x ()))))
+
+Application.Default.Shutdown.Add(fun _ -> dslLoop.Dispose())
 
 let setNodeType (widget: #Widget) (typeId: DslSymbol) = widget.Data.[Symbols.typeId] <- typeId
 
