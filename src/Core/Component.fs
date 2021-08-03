@@ -93,11 +93,16 @@ type ComponentContext(stateStore: StateStore) =
 let updateComponent (host: ComponentHost) (desc: WidgetDescriptor) =
 
     if desc.NodeType = getNodeType host.Child then
-        desc.PatchWidget(Some host.Child)
+        let actions, _ = desc.PatchWidget(Some host.Child)
+        actions, { Widget = host }
     else
-        let newRoot = desc.PatchWidget None
-        host.Replace newRoot
-        newRoot
+        let actions, result = desc.PatchWidget None
+
+        seq {
+            yield! actions
+            host.Replace result.Widget
+        },
+        { Widget = host }
 
 let statefullComponent (render: 'p -> ComponentContext -> WidgetDescriptor) props =
     let typeId = { Value = render.GetType().FullName }
@@ -105,7 +110,8 @@ let statefullComponent (render: 'p -> ComponentContext -> WidgetDescriptor) prop
     let update features host () =
         let ctx = ComponentContext(features.State)
         let desc = render props ctx
-        updateComponent host desc
+        let actions, _ = updateComponent host desc
+        actions |> Seq.iter exec
 
     let patchWidget =
         function
@@ -113,20 +119,24 @@ let statefullComponent (render: 'p -> ComponentContext -> WidgetDescriptor) prop
             let ctx = ComponentContext(StateStore())
             let features = ctx.Build()
             let host = new ComponentHost(typeId)
-            features.State.OnSetState((update features host) >> ignore)
+            features.State.OnSetState(update features host)
             setComponentFeatures host features
             let desc = render props ctx
-            let widget = desc.PatchWidget None
-            host.Add widget
-            // hook onCreated
-            features.OnCreated()
-            host :> Widget
+            let actions, result = desc.PatchWidget None
+
+            seq {
+                yield! actions
+                host.Add result.Widget
+                // hook onCreated
+                features.OnCreated()
+            },
+            { Widget = host }
         | Some (w: Widget) ->
             match (getComponentFeatures w), w with
             | Some features, (:? ComponentHost as host) ->
-                features.State.OnSetState((update features host) >> ignore)
-                update features host () |> ignore
-                host :> Widget
+                features.State.OnSetState(update features host)
+                update features host ()
+                Seq.empty, { Widget = host }
             | _, _ -> failwith "it is not a component"
 
 
