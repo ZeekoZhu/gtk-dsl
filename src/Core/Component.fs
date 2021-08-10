@@ -93,9 +93,9 @@ type ComponentContext(stateStore: StateStore) =
 let updateComponent (host: ComponentHost) (desc: WidgetDescriptor) =
 
     if desc.NodeType = getNodeType host.Child then
-        desc.PatchWidget(Some host.Child)
+        desc.PatchWidget(host.Child)
     else
-        let newRoot = desc.PatchWidget None
+        let newRoot = desc.CreateWidget()
         host.Replace newRoot
         newRoot
 
@@ -106,29 +106,28 @@ let statefullComponent (render: 'p -> ComponentContext -> WidgetDescriptor) prop
         let ctx = ComponentContext(features.State)
         let desc = render props ctx
         updateComponent host desc
+    let createNew () =
+        let ctx = ComponentContext(StateStore())
+        let features = ctx.Build()
+        let host = new ComponentHost(typeId)
+        features.State.OnSetState((update features host) >> ignore)
+        setComponentFeatures host features
+        let desc = render props ctx
+        let widget = desc.CreateWidget()
+        host.Add widget
+        // hook onCreated
+        features.OnCreated()
+        host :> Widget
 
-    let patchWidget =
-        function
-        | None ->
-            let ctx = ComponentContext(StateStore())
-            let features = ctx.Build()
-            let host = new ComponentHost(typeId)
+    let patchWidget (w:Widget) =
+        match (getComponentFeatures w), w with
+        | Some features, (:? ComponentHost as host) ->
             features.State.OnSetState((update features host) >> ignore)
-            setComponentFeatures host features
-            let desc = render props ctx
-            let widget = desc.PatchWidget None
-            host.Add widget
-            // hook onCreated
-            features.OnCreated()
+            update features host () |> ignore
             host :> Widget
-        | Some (w: Widget) ->
-            match (getComponentFeatures w), w with
-            | Some features, (:? ComponentHost as host) ->
-                features.State.OnSetState((update features host) >> ignore)
-                update features host () |> ignore
-                host :> Widget
-            | _, _ -> failwith "it is not a component"
+        | _, _ -> failwith "it is not a component"
 
 
     { NodeType = typeId
+      CreateWidget = createNew
       PatchWidget = patchWidget }

@@ -47,34 +47,29 @@ let registerListener (widget: Widget) (event: string) (disposable: IDisposable) 
 
 type WidgetDescriptor =
     { NodeType: DslSymbol
-      PatchWidget: Widget option -> Widget }
+      CreateWidget: unit -> Widget
+      PatchWidget: Widget -> Widget }
 
 let baseWidget<'w, 'p when 'w :> Widget> (bindProperty: 'w -> 'p -> unit) (create: unit -> 'w) (props: 'p seq) =
     let typeId = { Value = typeof<'w>.FullName }
 
-    let patchWidget (widget: Widget option) =
-        let setProperties widget = props |> Seq.iter (bindProperty widget)
-
-        let createNew () =
-            let w = create ()
+    let setProperties widget = props |> Seq.iter (bindProperty widget)
+    let createNew () =
+        let w = create ()
+        setProperties w
+        setNodeType w typeId
+        w :> Widget
+    let patchWidget (widget: Widget) =
+        match widget with
+        | :? 'w as w ->
             setProperties w
             w :> Widget
-
-        match widget with
-        | Some widget ->
-            match widget with
-            | :? 'w as w ->
-                setProperties w
-                w :> Widget
-            | _ ->
-                failwith
-                    $"try to update widget of type {widget.GetType().FullName} with descriptor of type {typeId.Value}"
-        | None ->
-            let widget = createNew ()
-            setNodeType widget typeId
-            widget
+        | _ ->
+            failwith
+                $"try to update widget of type {widget.GetType().FullName} with descriptor of type {typeId.Value}"
 
     { NodeType = typeId
+      CreateWidget = createNew
       PatchWidget = patchWidget }
 
 type ChildPropertyDescriptor<'c when 'c :> Container> =
@@ -99,6 +94,10 @@ let patchContainer (c: #Container) (patches: PatchChildrenAction<#Container> seq
     let patch =
         function
         | Add (desc, widget) ->
+            let widget =
+                match widget with
+                | Some w -> w
+                | None -> desc.Child.CreateWidget()
             let widget = desc.Child.PatchWidget widget
             desc.ChildProperties.AddChild(c, widget)
         | Remove widget -> widget.Destroy()
@@ -139,6 +138,7 @@ let containerWidget<'w, 'p when 'w :> Container>
           PatchWidget = patchWidget }
 
 let mount (window: #Container) widgetDescriptor =
-    let root = widgetDescriptor.PatchWidget None
+    let root = widgetDescriptor.CreateWidget()
+    let root = widgetDescriptor.PatchWidget root
     window.Add root
     window.ShowAll()
