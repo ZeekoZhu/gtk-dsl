@@ -3,6 +3,7 @@ module Gtk.DSL.Quotation
 open System
 open FSharp.Quotations.Evaluator
 open Gtk
+open Gtk.DSL.Component
 open Microsoft.FSharp.Quotations
 open Microsoft.FSharp.Quotations.Patterns
 open Gtk.DSL.Core
@@ -19,6 +20,7 @@ type EventBindingInfo<'w> = 'w -> unit
 type BindingInfo<'w> =
     | PropBindingInfo of PropBindingInfo<'w>
     | EventBindingInfo of EventBindingInfo<'w>
+    | RefBinding of WidgetRef<'w>
 
 let (:=) (propExpr: Expr<'t>) (value: 't) =
     match propExpr with
@@ -92,8 +94,10 @@ let register<'w, 'h, 'a when 'w :> Widget and 'h: delegate<'a, unit> and 'h :> D
     |> EventBindingInfo
 
 let inline (@=) a b = register a b
+let inline bindRef x = RefBinding x
 
 let bindProperty (widget: 'w) (binding: BindingInfo<'w>) =
     match binding with
     | PropBindingInfo propBinding -> propBinding.SetValue(widget)
     | EventBindingInfo register -> register widget
+    | RefBinding wRef -> wRef.Current <- Some widget

@@ -20,7 +20,7 @@ type StateStore() =
 
     /// if it's the first time call this method, it will create a new state with then init value
     /// or else it will ignore the input and return the current state and state setter
-    member this.GetState(initValue: 't) =
+    member this.GetState(initValue: 't, triggerUpdate: bool) =
         let stateIdx = idx
 
         if states.Count <= idx then
@@ -30,7 +30,9 @@ type StateStore() =
 
         let setState (value: 't) =
             states.[stateIdx] <- value
-            onSetState.Trigger()
+
+            if triggerUpdate then
+                onSetState.Trigger()
 
         idx <- idx + 1
         currentValue, setState
@@ -70,6 +72,13 @@ type ComponentHost(typeId: DslSymbol) as this =
 
         this.Add(child)
 
+type WidgetRef<'w>() =
+    let mutable current = None
+
+    member this.Current
+        with get () = current
+        and set (value: 'w option) = current <- value
+
 /// Define component features when rendering
 type ComponentContext(stateStore: StateStore) =
     do stateStore.Reset()
@@ -81,7 +90,13 @@ type ComponentContext(stateStore: StateStore) =
     let onDestroy = List<VoidCallback>()
     member this.OnCreated fn = onCreated.Add fn
     member this.OnDestroy fn = onDestroy.Add fn
-    member this.UseState(initValue: 't) = stateStore.GetState initValue
+    member this.UseState(initValue: 't) = stateStore.GetState(initValue, true)
+
+    member this.UseRef<'w>() =
+        let wRef, _ =
+            stateStore.GetState(WidgetRef<'w>(), false)
+
+        wRef
 
     /// Create component features, it should be called only once after first render
     member internal this.Build() =
@@ -93,10 +108,16 @@ type ComponentContext(stateStore: StateStore) =
 let updateComponent (scheduler: PatchScheduler) (host: ComponentHost) (desc: WidgetDescriptor) =
 
     if desc.NodeType = getNodeType host.Child then
-        scheduler.Update {Widget = host.Child; Descriptor = desc}
+        scheduler.Update
+            { Widget = host.Child
+              Descriptor = desc }
     else
         let newRoot = desc.CreateWidget()
-        scheduler.Update {Widget = host.Child; Descriptor = desc}
+
+        scheduler.Update
+            { Widget = host.Child
+              Descriptor = desc }
+
         host.Replace newRoot
 
 let statefullComponent (render: 'p -> ComponentContext -> WidgetDescriptor) props =

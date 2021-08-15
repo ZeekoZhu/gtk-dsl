@@ -25,8 +25,16 @@ module Program =
     let mainWindow =
         fun () (ctx: ComponentContext) ->
             let cnt, setCnt = ctx.UseState 0
+            let boxRef = ctx.UseRef<Box>()
 
-            gtkBox [ <@ _box.Orientation @> := Orientation.Vertical ] [
+            let boxChildrenCnt () =
+                match boxRef.Current with
+                | Some box -> box.Children.Length.ToString()
+                | None -> "box ref is not captured"
+
+            gtkBox [ <@ _box.Orientation @> := Orientation.Vertical
+                     bindRef boxRef ] [
+                packStart (false, false, 24u) (textButton ("box ref", (fun _ -> printfn $"%s{boxChildrenCnt ()}")))
                 packStart
                     (false, false, 24u)
                     (gtkBox [ <@ _box.Orientation @> := Orientation.Horizontal
@@ -61,6 +69,5 @@ module Program =
         |> ignore
 
         win.Show()
-        win.Maximize()
         Application.Run()
         0
