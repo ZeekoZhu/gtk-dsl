@@ -90,27 +90,27 @@ type ComponentContext(stateStore: StateStore) =
           State = stateStore }
 
 /// Rerender the component
-let updateComponent (host: ComponentHost) (desc: WidgetDescriptor) =
+let updateComponent (scheduler: PatchScheduler) (host: ComponentHost) (desc: WidgetDescriptor) =
 
     if desc.NodeType = getNodeType host.Child then
-        desc.PatchWidget(host.Child)
+        scheduler.Update {Widget = host.Child; Descriptor = desc}
     else
         let newRoot = desc.CreateWidget()
+        scheduler.Update {Widget = host.Child; Descriptor = desc}
         host.Replace newRoot
-        newRoot
 
 let statefullComponent (render: 'p -> ComponentContext -> WidgetDescriptor) props =
     let typeId = { Value = render.GetType().FullName }
 
-    let update features host () =
+    let update (scheduler: PatchScheduler) features host () =
         let ctx = ComponentContext(features.State)
         let desc = render props ctx
-        updateComponent host desc
+        updateComponent scheduler host desc
+
     let createNew () =
         let ctx = ComponentContext(StateStore())
         let features = ctx.Build()
         let host = new ComponentHost(typeId)
-        features.State.OnSetState((update features host) >> ignore)
         setComponentFeatures host features
         let desc = render props ctx
         let widget = desc.CreateWidget()
@@ -119,12 +119,11 @@ let statefullComponent (render: 'p -> ComponentContext -> WidgetDescriptor) prop
         features.OnCreated()
         host :> Widget
 
-    let patchWidget (w:Widget) =
+    let patchWidget (scheduler: PatchScheduler) (w: Widget) =
         match (getComponentFeatures w), w with
         | Some features, (:? ComponentHost as host) ->
-            features.State.OnSetState((update features host) >> ignore)
-            update features host () |> ignore
-            host :> Widget
+            features.State.OnSetState(update scheduler features host)
+            update scheduler features host ()
         | _, _ -> failwith "it is not a component"
 
 

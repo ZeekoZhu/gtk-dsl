@@ -1,8 +1,8 @@
 ﻿module Gtk.DSL.Core
 
 open System
+open System.Collections.Concurrent
 open System.Reactive.Subjects
-open System.Reactive.Linq
 open Gtk
 open Gtk.DSL.MutableLookup
 
@@ -19,11 +19,7 @@ let gtkMainThreadAgent = new Subject<VoidCallback>()
 
 let dslLoop =
     (gtkMainThreadAgent :> IObservable<_>)
-        // todo
-        .Buffer(
-            TimeSpan.FromMilliseconds(5.0)
-        )
-        .Subscribe(fun fn -> Application.Invoke(EventHandler(fun _ _ -> fn |> Seq.iter (fun x -> x ()))))
+        .Subscribe(fun fn -> Application.Invoke(EventHandler(fun _ _ -> fn ())))
 
 Application.Default.Shutdown.Add(fun _ -> dslLoop.Dispose())
 
@@ -47,26 +43,59 @@ let registerListener (widget: Widget) (event: string) (disposable: IDisposable) 
 
 type WidgetDescriptor =
     { NodeType: DslSymbol
+      /// create a new widget
       CreateWidget: unit -> Widget
-      PatchWidget: Widget -> Widget }
+      /// patch existing widget
+      PatchWidget: PatchScheduler -> Widget -> unit }
+
+and PatchScheduler() =
+    let updateQueue = ConcurrentQueue<PatchUnit>()
+    let patchQueue = ConcurrentQueue<PatchUnit>()
+    let scheduledEvent = Event<unit>()
+
+    let update (pu: PatchUnit) =
+        updateQueue.Enqueue pu
+        scheduledEvent.Trigger()
+
+    let patch (pu: PatchUnit) =
+        patchQueue.Enqueue pu
+
+    /// Update a widget from event handler
+    member _.Update(pu) = update pu
+    /// Patch a widget during update
+    member _.Patch(pu) = patch pu
+
+    member this.Next() =
+        match patchQueue.TryDequeue() with
+        | false, _ ->
+            match updateQueue.TryDequeue() with
+            | false, _ -> None
+            | true, pu -> Some pu
+        | true, pu -> Some pu
+
+    member this.Updated = scheduledEvent.Publish
+
+and PatchUnit =
+    { Widget: Widget
+      Descriptor: WidgetDescriptor }
+
 
 let baseWidget<'w, 'p when 'w :> Widget> (bindProperty: 'w -> 'p -> unit) (create: unit -> 'w) (props: 'p seq) =
     let typeId = { Value = typeof<'w>.FullName }
 
     let setProperties widget = props |> Seq.iter (bindProperty widget)
+
     let createNew () =
         let w = create ()
         setProperties w
         setNodeType w typeId
         w :> Widget
-    let patchWidget (widget: Widget) =
+
+    let patchWidget _ (widget: Widget) =
         match widget with
-        | :? 'w as w ->
-            setProperties w
-            w :> Widget
+        | :? 'w as w -> setProperties w
         | _ ->
-            failwith
-                $"try to update widget of type {widget.GetType().FullName} with descriptor of type {typeId.Value}"
+            failwith $"try to update widget of type {widget.GetType().FullName} with descriptor of type {typeId.Value}"
 
     { NodeType = typeId
       CreateWidget = createNew
@@ -86,7 +115,7 @@ type PatchChildrenAction<'c when 'c :> Container> =
     | Add of ChildDescriptor<'c> * Widget option
     | Remove of Widget
 
-let patchContainer (c: #Container) (patches: PatchChildrenAction<#Container> seq) =
+let patchContainer (scheduler: PatchScheduler) (c: #Container) (patches: PatchChildrenAction<#Container> seq) =
     for child in c.Children do
         // detach child from widget tree
         c.Remove(child)
@@ -98,8 +127,13 @@ let patchContainer (c: #Container) (patches: PatchChildrenAction<#Container> seq
                 match widget with
                 | Some w -> w
                 | None -> desc.Child.CreateWidget()
-            let widget = desc.Child.PatchWidget widget
+
             desc.ChildProperties.AddChild(c, widget)
+
+            scheduler.Patch(
+                { Widget = widget
+                  Descriptor = desc.Child }
+            )
         | Remove widget -> widget.Destroy()
 
     for action in patches do
@@ -117,9 +151,9 @@ let private createPatchActions (children: Widget []) (descriptors: ChildDescript
             Remove previous
     }
 
-let patchChildren (container: 'w) (childrenDesc: ChildDescriptor<'w> seq) =
+let patchChildren (scheduler: PatchScheduler) (container: 'w) (childrenDesc: ChildDescriptor<'w> seq) =
     createPatchActions container.Children childrenDesc
-    |> patchContainer container
+    |> patchContainer scheduler container
 
 let containerWidget<'w, 'p when 'w :> Container>
     (bindProperty: 'w -> 'p -> unit)
@@ -128,17 +162,35 @@ let containerWidget<'w, 'p when 'w :> Container>
     =
     let widgetBase = baseWidget bindProperty create props
 
-    let patchWidget widget =
-        let container = widgetBase.PatchWidget widget :?> 'w
-        patchChildren container children
+    let patchWidget scheduler widget =
+        widgetBase.PatchWidget scheduler widget
+
+        let container = widget :?> 'w
+        patchChildren scheduler container children
         container.ShowAll()
-        container :> Widget
 
     { widgetBase with
           PatchWidget = patchWidget }
 
+let rec runNextUpdate (scheduler: PatchScheduler) () =
+    match scheduler.Next() with
+    | None -> ()
+    | Some pu ->
+        pu.Descriptor.PatchWidget scheduler pu.Widget
+        runNextUpdate scheduler ()
+
 let mount (window: #Container) widgetDescriptor =
+    let scheduler = PatchScheduler()
+
+    let disposeHandle =
+        scheduler.Updated.Subscribe(fun () -> gtkMainThreadAgent.OnNext(runNextUpdate scheduler))
+
+    window.Destroyed.Add(fun _ -> disposeHandle.Dispose())
     let root = widgetDescriptor.CreateWidget()
-    let root = widgetDescriptor.PatchWidget root
+
+    scheduler.Update
+        { Widget = root
+          Descriptor = widgetDescriptor }
+
     window.Add root
     window.ShowAll()
