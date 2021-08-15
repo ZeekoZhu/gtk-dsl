@@ -3,6 +3,7 @@ module UnitTest.RegisterListener
 open System
 open Gtk
 open DSL.Core
+open DSL.Quotation
 open Moq
 open Xunit
 open FsUnit.Xunit

@@ -30,17 +30,6 @@ let getNodeType (widget: #Widget) =
     | :? DslSymbol as typeId -> typeId
     | _ -> failwith $"{widget.GetType().FullName} is not created by dsl functions"
 
-
-let registerListener (widget: Widget) (event: string) (disposable: IDisposable) =
-    let event = { Event = event }
-
-    if widget.Data.ContainsKey event then
-        let prev = widget.Data.[event] :?> IDisposable
-        prev.Dispose()
-        widget.Data.Remove(event)
-
-    widget.Data.Add(event, disposable)
-
 type WidgetDescriptor =
     { NodeType: DslSymbol
       /// create a new widget

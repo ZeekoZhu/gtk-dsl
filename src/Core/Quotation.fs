@@ -31,6 +31,16 @@ let (:=) (propExpr: Expr<'t>) (value: 't) =
     | _ -> failwith "Only property getter access is allowed here"
     |> PropBindingInfo
 
+let registerListener (widget: Widget) (event: string) (disposable: IDisposable) =
+    let event = { Event = event }
+
+    if widget.Data.ContainsKey event then
+        let prev = widget.Data.[event] :?> IDisposable
+        prev.Dispose()
+        widget.Data.Remove(event)
+
+    widget.Data.Add(event, disposable)
+
 let register<'w, 'h, 'a when 'w :> Widget and 'h: delegate<'a, unit> and 'h :> Delegate>
     (eventExpr: Expr<IEvent<'h, 'a>>)
     (handler: 'a -> unit)

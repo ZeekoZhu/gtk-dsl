@@ -26,7 +26,7 @@ type MutableLookup<'key, 'value when 'key: equality>(elements: 'value seq, keySe
     member this.TryPop(key: 'key) =
         let exists, queue = dict.TryGetValue key
 
-        if exists then
+        if exists && queue.Count > 0 then
             queue.Dequeue() |> Some
         else
             None

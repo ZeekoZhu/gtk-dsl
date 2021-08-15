@@ -26,12 +26,19 @@ module Program =
         fun () (ctx: ComponentContext) ->
             let cnt, setCnt = ctx.UseState 0
 
-            gtkBox [ <@ _box.Orientation @> := Orientation.Horizontal
-                     <@ _box.Valign @> := Align.Center
-                     <@ _box.Halign @> := Align.Center ] [
-                packStart (false, false, 24u) (textButton ("-", (fun _ -> setCnt (cnt - 1))))
-                packStart (false, false, 24u) (label [ <@ _label.LabelProp @> := cnt.ToString() ])
-                packStart (false, false, 24u) (textButton ("+", (fun _ -> setCnt (cnt + 1))))
+            gtkBox [ <@ _box.Orientation @> := Orientation.Vertical ] [
+                packStart
+                    (false, false, 24u)
+                    (gtkBox [ <@ _box.Orientation @> := Orientation.Horizontal
+                              <@ _box.Valign @> := Align.Center
+                              <@ _box.Halign @> := Align.Center ] [
+                        packStart (false, false, 24u) (textButton ("-", (fun _ -> setCnt (cnt - 1))))
+                        packStart (false, false, 24u) (label [ <@ _label.LabelProp @> := cnt.ToString() ])
+                        packStart (false, false, 24u) (textButton ("+", (fun _ -> setCnt (cnt + 1))))
+                     ])
+                if cnt > 0 then
+                    for i in 1 .. cnt do
+                        packStart (false, false, 24u) (label [ <@ _label.LabelProp @> := i.ToString() ])
             ]
         |> statefullComponent
 
@@ -54,5 +61,6 @@ module Program =
         |> ignore
 
         win.Show()
+        win.Maximize()
         Application.Run()
         0
