@@ -5,9 +5,10 @@ open Gtk.DSL.Core
 open Gtk.DSL.Quotation
 
 let inline add child =
-    { ChildProperties =
-          { new ChildPropertyDescriptor<#Bin> with
-              member this.AddChild(binLike, child) = binLike.Add(child) }
+    { ChildDescriptor =
+          fun (container: Container) child ->
+              let bin = container :?> Bin
+              bin.Add child
       Child = child }
 
 

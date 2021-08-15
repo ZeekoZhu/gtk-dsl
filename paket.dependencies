@@ -3,6 +3,7 @@ storage none
 
 nuget FSharp.Core
 nuget FSharp.Quotations.Evaluator
+nuget FSharpPlus
 nuget FsUnit.xUnit
 nuget GTKSharp
 nuget Humanizer.Core
