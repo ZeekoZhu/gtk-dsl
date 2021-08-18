@@ -21,6 +21,7 @@ type BindingInfo<'w> =
     | PropBindingInfo of PropBindingInfo<'w>
     | EventBindingInfo of EventBindingInfo<'w>
     | RefBinding of WidgetRef<'w>
+    | ClassNameBinding of ('w -> unit)
 
 let (:=) (propExpr: Expr<'t>) (value: 't) =
     match propExpr with
@@ -96,8 +97,23 @@ let register<'w, 'h, 'a when 'w :> Widget and 'h: delegate<'a, unit> and 'h :> D
 let inline (@=) a b = register a b
 let inline bindRef x = RefBinding x
 
+let private classNamesSymbol = { Value = "DSL:ClassNames" }
+
+let classNames<'w when 'w :> Widget> classNameList =
+    fun (widget: 'w) ->
+        let styleCtx = widget.StyleContext
+        match widget.Data.ContainsKey classNamesSymbol with
+        | false -> ()
+        | true ->
+            let previousClasses = widget.Data.[classNamesSymbol] :?> string list
+            previousClasses |> List.iter styleCtx.RemoveClass
+        classNameList |> List.iter styleCtx.AddClass
+        printfn "class set"
+    |> ClassNameBinding
+
 let bindProperty (widget: 'w) (binding: BindingInfo<'w>) =
     match binding with
     | PropBindingInfo propBinding -> propBinding.SetValue(widget)
     | EventBindingInfo register -> register widget
     | RefBinding wRef -> wRef.Current <- Some widget
+    | ClassNameBinding setClassNames -> setClassNames widget

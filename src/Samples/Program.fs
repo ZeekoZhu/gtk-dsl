@@ -1,5 +1,8 @@
 ﻿namespace Samples
 
+open Gdk
+open Gdk
+open Gtk
 open Gtk.DSL.Core
 open Gtk.DSL.Component
 open Gtk.DSL.Quotation
@@ -22,32 +25,14 @@ module Program =
             <| label [ <@ _label.LabelProp @> := text ]
         |> statefullComponent
 
-    let mainWindow =
+    let todoMain =
         fun () (ctx: ComponentContext) ->
-            let cnt = ctx.UseState 0
-            let boxRef = ctx.UseRef<Box>()
+            label [ <@ _label.LabelProp @> := "todos"
+                    classNames [ "todo-title" ] ]
+        |> statefullComponent
 
-            let boxChildrenCnt () =
-                match boxRef.Current with
-                | Some box -> box.Children.Length.ToString()
-                | None -> "box ref is not captured"
-
-            gtkBox [ <@ _box.Orientation @> := Orientation.Vertical
-                     bindRef boxRef ] [
-                packStart (false, false, 24u) (textButton ("box ref", (fun _ -> printfn $"%s{boxChildrenCnt ()}")))
-                packStart
-                    (false, false, 24u)
-                    (gtkBox [ <@ _box.Orientation @> := Orientation.Horizontal
-                              <@ _box.Valign @> := Align.Center
-                              <@ _box.Halign @> := Align.Center ] [
-                        packStart (false, false, 24u) (textButton ("-", (fun _ -> cnt.Value <- (cnt.Value - 1))))
-                        packStart (false, false, 24u) (label [ <@ _label.LabelProp @> := cnt.Value.ToString() ])
-                        packStart (false, false, 24u) (textButton ("+", (fun _ -> cnt.Value <- (cnt.Value + 1))))
-                     ])
-                if cnt.Value > 0 then
-                    for i in 1 .. cnt.Value do
-                        packStart (false, false, 24u) (label [ <@ _label.LabelProp @> := i.ToString() ])
-            ]
+    let mainWindow =
+        fun () (ctx: ComponentContext) -> todoMain ()
         |> statefullComponent
 
     [<EntryPoint>]
@@ -57,7 +42,7 @@ module Program =
         let view = mainWindow ()
 
         let app =
-            new Application("org.Samples.Samples", GLib.ApplicationFlags.None)
+            new Application("org.Samples.Todo", GLib.ApplicationFlags.None)
 
         app.Register(GLib.Cancellable.Current) |> ignore
 
@@ -69,5 +54,13 @@ module Program =
         |> ignore
 
         win.Show()
+        let cssProvider = new CssProvider()
+
+        if cssProvider.LoadFromPath "./app.css" then
+//            win.StyleContext.AddProvider(cssProvider, 800u)
+            StyleContext.AddProviderForScreen(Screen.Default, cssProvider, 800u)
+        else
+            printfn "not loaded"
+
         Application.Run()
         0
