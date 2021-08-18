@@ -24,7 +24,7 @@ module Program =
 
     let mainWindow =
         fun () (ctx: ComponentContext) ->
-            let cnt, setCnt = ctx.UseState 0
+            let cnt = ctx.UseState 0
             let boxRef = ctx.UseRef<Box>()
 
             let boxChildrenCnt () =
@@ -40,12 +40,12 @@ module Program =
                     (gtkBox [ <@ _box.Orientation @> := Orientation.Horizontal
                               <@ _box.Valign @> := Align.Center
                               <@ _box.Halign @> := Align.Center ] [
-                        packStart (false, false, 24u) (textButton ("-", (fun _ -> setCnt (cnt - 1))))
-                        packStart (false, false, 24u) (label [ <@ _label.LabelProp @> := cnt.ToString() ])
-                        packStart (false, false, 24u) (textButton ("+", (fun _ -> setCnt (cnt + 1))))
+                        packStart (false, false, 24u) (textButton ("-", (fun _ -> cnt.Value <- (cnt.Value - 1))))
+                        packStart (false, false, 24u) (label [ <@ _label.LabelProp @> := cnt.Value.ToString() ])
+                        packStart (false, false, 24u) (textButton ("+", (fun _ -> cnt.Value <- (cnt.Value + 1))))
                      ])
-                if cnt > 0 then
-                    for i in 1 .. cnt do
+                if cnt.Value > 0 then
+                    for i in 1 .. cnt.Value do
                         packStart (false, false, 24u) (label [ <@ _label.LabelProp @> := i.ToString() ])
             ]
         |> statefullComponent

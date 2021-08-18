@@ -5,6 +5,7 @@ open System.Collections.Concurrent
 open System.Reactive.Subjects
 open Gtk
 open Gtk.DSL.MutableLookup
+open System.Reactive.Linq
 
 type VoidCallback = unit -> unit
 type DslEvent = { Event: string }
@@ -46,8 +47,7 @@ and PatchScheduler() =
         updateQueue.Enqueue pu
         scheduledEvent.Trigger()
 
-    let patch (pu: PatchUnit) =
-        patchQueue.Enqueue pu
+    let patch (pu: PatchUnit) = patchQueue.Enqueue pu
 
     /// Update a widget from event handler
     member _.Update(pu) = update pu
@@ -172,7 +172,10 @@ let mount (window: #Container) widgetDescriptor =
     let scheduler = PatchScheduler()
 
     let disposeHandle =
-        scheduler.Updated.Subscribe(fun () -> gtkMainThreadAgent.OnNext(runNextUpdate scheduler))
+        scheduler
+            .Updated
+            .Throttle(TimeSpan.FromMilliseconds(float 10))
+            .Subscribe(fun () -> gtkMainThreadAgent.OnNext(runNextUpdate scheduler))
 
     window.Destroyed.Add(fun _ -> disposeHandle.Dispose())
     let root = widgetDescriptor.CreateWidget()

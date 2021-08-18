@@ -1,38 +1,30 @@
 module Gtk.DSL.Component
 
-open System.Collections.Generic
 open Gtk
-open DSL.Core
+open Gtk.DSL.Core
+open System
+open System.Collections.Generic
+open System.Reactive.Linq
+open System.Reactive.Subjects
 
-/// Hold state data for a component
-type StateStore() =
+/// Hold persisted data for a component during different rendering
+type RenderContext() =
     let states = List<obj>()
     let mutable idx = 0
     let reset () = idx <- 0
-    let onSetState = Event<unit>()
-    let mutable setStateHandler = ignore
-    do onSetState.Publish.Add(fun () -> gtkMainThreadAgent.OnNext(setStateHandler))
-    /// register setState callback
-    /// the callback will be called when `setState` is called
-    member this.OnSetState fn = setStateHandler <- fn
-    /// reset useState status
     member this.Reset() = reset ()
 
     /// if it's the first time call this method, it will create a new state with then init value
     /// or else it will ignore the input and return the current state and state setter
-    member this.GetState(initValue: 't, triggerUpdate: bool) =
+    member this.GetState(initValue: unit -> 't) =
         let stateIdx = idx
 
         if states.Count <= idx then
-            states.Add(initValue)
+            states.Add(initValue ())
 
         let currentValue = states.[stateIdx] :?> 't
 
-        let setState (value: 't) =
-            states.[stateIdx] <- value
-
-            if triggerUpdate then
-                onSetState.Trigger()
+        let setState (value: 't) = states.[stateIdx] <- value
 
         idx <- idx + 1
         currentValue, setState
@@ -41,7 +33,17 @@ type StateStore() =
 type ComponentFeatures =
     { OnCreated: VoidCallback
       OnDestroy: VoidCallback
-      State: StateStore }
+      RegisterUpdateCallback: (unit -> unit) -> unit
+      State: RenderContext }
+
+type ValueRef<'v>(initValue: 'v) =
+    let subject = new BehaviorSubject<'v>(initValue)
+
+    member this.Value
+        with get () = subject.Value
+        and set (value: 'v) = subject.OnNext(value)
+
+    member this.Stream = subject.AsObservable()
 
 let setComponentFeatures (widget: #Widget) (features: ComponentFeatures) =
     widget.Data.[Symbols.dslComp] <- (features :> obj)
@@ -80,21 +82,35 @@ type WidgetRef<'w>() =
         and set (value: 'w option) = current <- value
 
 /// Define component features when rendering
-type ComponentContext(stateStore: StateStore) =
-    do stateStore.Reset()
+type ComponentContext(renderContext: RenderContext) =
+    do renderContext.Reset()
     let onCreated = List<VoidCallback>()
+    let onDestroy = List<VoidCallback>()
+    let mutable callbackOnUpdate = fun () -> ()
 
     let runCallbacks callbacks =
         fun () -> callbacks |> Seq.iter (fun fn -> fn ())
 
-    let onDestroy = List<VoidCallback>()
     member this.OnCreated fn = onCreated.Add fn
     member this.OnDestroy fn = onDestroy.Add fn
-    member this.UseState(initValue: 't) = stateStore.GetState(initValue, true)
+
+    member this.UseState(initValue: 't) =
+        let state, _ =
+            renderContext.GetState
+                (fun () ->
+                    let state = ValueRef(initValue)
+
+                    let dispose =
+                        state.Stream.Subscribe(ignore >> callbackOnUpdate)
+
+                    this.OnDestroy(fun () -> dispose.Dispose())
+                    state)
+
+        state
 
     member this.UseRef<'w>() =
         let wRef, _ =
-            stateStore.GetState(WidgetRef<'w>(), false)
+            renderContext.GetState(fun () -> WidgetRef<'w>())
 
         wRef
 
@@ -102,7 +118,8 @@ type ComponentContext(stateStore: StateStore) =
     member internal this.Build() =
         { OnCreated = runCallbacks onCreated
           OnDestroy = runCallbacks onDestroy
-          State = stateStore }
+          RegisterUpdateCallback = fun fn -> callbackOnUpdate <- fn
+          State = renderContext }
 
 /// Rerender the component
 let updateComponent (scheduler: PatchScheduler) (host: ComponentHost) (desc: WidgetDescriptor) =
@@ -129,7 +146,7 @@ let statefullComponent (render: 'p -> ComponentContext -> WidgetDescriptor) prop
         updateComponent scheduler host desc
 
     let createNew () =
-        let ctx = ComponentContext(StateStore())
+        let ctx = ComponentContext(RenderContext())
         let features = ctx.Build()
         let host = new ComponentHost(typeId)
         setComponentFeatures host features
@@ -143,7 +160,7 @@ let statefullComponent (render: 'p -> ComponentContext -> WidgetDescriptor) prop
     let patchWidget (scheduler: PatchScheduler) (w: Widget) =
         match (getComponentFeatures w), w with
         | Some features, (:? ComponentHost as host) ->
-            features.State.OnSetState(update scheduler features host)
+            features.RegisterUpdateCallback (update scheduler features host)
             update scheduler features host ()
         | _, _ -> failwith "it is not a component"
 
