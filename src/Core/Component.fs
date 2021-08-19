@@ -7,35 +7,6 @@ open System.Collections.Generic
 open System.Reactive.Linq
 open System.Reactive.Subjects
 
-/// Hold persisted data for a component during different rendering
-type RenderContext() =
-    let states = List<obj>()
-    let mutable idx = 0
-    let reset () = idx <- 0
-    member this.Reset() = reset ()
-
-    /// if it's the first time call this method, it will create a new state with then init value
-    /// or else it will ignore the input and return the current state and state setter
-    member this.GetState(initValue: unit -> 't) =
-        let stateIdx = idx
-
-        if states.Count <= idx then
-            states.Add(initValue ())
-
-        let currentValue = states.[stateIdx] :?> 't
-
-        let setState (value: 't) = states.[stateIdx] <- value
-
-        idx <- idx + 1
-        currentValue, setState
-
-/// Component's lifecycle hooks and state data
-type ComponentFeatures =
-    { OnCreated: VoidCallback
-      OnDestroy: VoidCallback
-      RegisterUpdateCallback: (unit -> unit) -> unit
-      State: RenderContext }
-
 type ValueRef<'v>(initValue: 'v) =
     let subject = new BehaviorSubject<'v>(initValue)
 
@@ -45,34 +16,35 @@ type ValueRef<'v>(initValue: 'v) =
 
     member this.Stream = subject.AsObservable()
 
-let setComponentFeatures (widget: #Widget) (features: ComponentFeatures) =
-    widget.Data.[Symbols.dslComp] <- (features :> obj)
+//let setComponentFeatures (widget: #Widget) (features: ComponentFeatures) =
+//    widget.Data.[Symbols.dslComp] <- (features :> obj)
+//
+//let getComponentFeatures (widget: #Widget) =
+//    match widget.Data.[Symbols.dslComp] with
+//    | :? ComponentFeatures as features -> Some features
+//    | _ -> None
 
-let getComponentFeatures (widget: #Widget) =
-    match widget.Data.[Symbols.dslComp] with
-    | :? ComponentFeatures as features -> Some features
-    | _ -> None
-
-/// Every component's root widget will be wrapped inside a ComponentHost
-/// this host widget use component's typeId as its NodeType
-/// and also holds the features for the component instance
-type ComponentHost(typeId: DslSymbol) as this =
+type ComponentHost(typeId: DslSymbol, ctx: IDslContext<Widget>) as this =
     inherit Bin()
-    do setNodeType this typeId
+    do ctx.WidgetAdaptor.SetNodeType this typeId
 
     override this.Destroy() =
         // hooks on destroy
-        match getComponentFeatures this.Child with
+        match ctx.WidgetAdaptor.TryGetComponentFeatures this.Child with
         | Some features -> features.OnDestroy()
         | None -> ()
 
         base.Destroy()
 
-    member this.Replace(child: #Widget) =
-        if this.Child <> null then
-            this.Child.Destroy()
+    interface IComponentHost<Widget> with
+        member val Widget = this :> Widget
+        member val Child = this.Child
 
-        this.Add(child)
+        member this.Replace(child: Widget) =
+            if this.Child <> null then
+                this.Child.Destroy()
+
+            this.Add(child)
 
 type WidgetRef<'w>() =
     let mutable current = None
@@ -121,47 +93,55 @@ type ComponentContext(renderContext: RenderContext) =
           RegisterUpdateCallback = fun fn -> callbackOnUpdate <- fn
           State = renderContext }
 
-/// Rerender the component
-let updateComponent (scheduler: PatchScheduler) (host: ComponentHost) (desc: WidgetDescriptor) =
+let (|IsComponentHost|_|) (widget: 'w) =
+    match widget :> obj with
+    | :? IComponentHost<'w> as host -> Some host
+    | _ -> None
 
-    if desc.NodeType = getNodeType host.Child then
-        scheduler.Update
+/// Rerender the component
+let updateComponent (ctx: IDslContext<'w>) (host: IComponentHost<'w>) (desc: WidgetDescriptor<'w>) =
+
+    if desc.NodeType = (ctx.WidgetAdaptor.GetNodeType host.Child) then
+        ctx.Scheduler.Update
             { Widget = host.Child
               Descriptor = desc }
     else
-        let newRoot = desc.CreateWidget()
+        let newRoot = desc.CreateWidget ctx
 
-        scheduler.Update
+        ctx.Scheduler.Update
             { Widget = host.Child
               Descriptor = desc }
 
         host.Replace newRoot
 
-let statefullComponent (render: 'p -> ComponentContext -> WidgetDescriptor) props =
+let statefullComponent (render: 'p -> ComponentContext -> WidgetDescriptor<'w>) props =
     let typeId = { Value = render.GetType().FullName }
 
-    let update (scheduler: PatchScheduler) features host () =
-        let ctx = ComponentContext(features.State)
-        let desc = render props ctx
-        updateComponent scheduler host desc
+    let update (ctx: IDslContext<'w>) features host () =
+        let compCtx = ComponentContext(features.State)
+        let desc = render props compCtx
+        updateComponent ctx host desc
 
-    let createNew () =
-        let ctx = ComponentContext(RenderContext())
-        let features = ctx.Build()
-        let host = new ComponentHost(typeId)
-        setComponentFeatures host features
-        let desc = render props ctx
-        let widget = desc.CreateWidget()
-        host.Add widget
+    let createNew (ctx: IDslContext<'w>) =
+        let compCtx = ComponentContext(RenderContext())
+        let features = compCtx.Build()
+
+        let host =
+            ctx.WidgetAdaptor.CreateComponentHost(typeId)
+
+        ctx.WidgetAdaptor.SetComponentFeatures host.Widget features
+        let desc = render props compCtx
+        let widget = desc.CreateWidget ctx
+        host.Replace widget
         // hook onCreated
         features.OnCreated()
-        host :> Widget
+        host.Widget
 
-    let patchWidget (scheduler: PatchScheduler) (w: Widget) =
-        match (getComponentFeatures w), w with
-        | Some features, (:? ComponentHost as host) ->
-            features.RegisterUpdateCallback (update scheduler features host)
-            update scheduler features host ()
+    let patchWidget (ctx: IDslContext<'w>) (w: 'w) =
+        match (ctx.WidgetAdaptor.TryGetComponentFeatures w), w with
+        | Some features, IsComponentHost host ->
+            features.RegisterUpdateCallback(update ctx features host)
+            update ctx features host ()
         | _, _ -> failwith "it is not a component"
 
 
