@@ -1,12 +1,9 @@
 ﻿module Gtk.DSL.Core
 
-open System
 open System.Collections.Concurrent
 open System.Collections.Generic
 open System.Reactive.Subjects
-open Gtk
 open Gtk.DSL.MutableLookup
-open System.Reactive.Linq
 
 type VoidCallback = unit -> unit
 type DslEvent = { Event: string }
@@ -19,11 +16,11 @@ module Symbols =
 
 let gtkMainThreadAgent = new Subject<VoidCallback>()
 
-let dslLoop =
-    (gtkMainThreadAgent :> IObservable<_>)
-        .Subscribe(fun fn -> Application.Invoke(EventHandler(fun _ _ -> fn ())))
-
-Application.Default.Shutdown.Add(fun _ -> dslLoop.Dispose())
+//let dslLoop =
+//    (gtkMainThreadAgent :> IObservable<_>)
+//        .Subscribe(fun fn -> Application.Invoke(EventHandler(fun _ _ -> fn ())))
+//
+//Application.Default.Shutdown.Add(fun _ -> dslLoop.Dispose())
 
 //let setNodeType (widget: #Widget) (typeId: DslSymbol) = widget.Data.[Symbols.typeId] <- typeId
 //
@@ -54,30 +51,6 @@ and IComponentHost<'w> =
     abstract member Child : 'w
     abstract member Replace : child: 'w -> unit
 
-and DefaultPatchScheduler<'w>() =
-    let updateQueue = ConcurrentQueue<PatchUnit<'w>>()
-    let patchQueue = ConcurrentQueue<PatchUnit<'w>>()
-    let scheduledEvent = Event<PatchUnit<'w>>()
-
-    let update (pu: PatchUnit<'w>) =
-        updateQueue.Enqueue pu
-        scheduledEvent.Trigger(pu)
-
-    let patch (pu: PatchUnit<'w>) = patchQueue.Enqueue pu
-
-    interface IPatchScheduler<'w> with
-        member _.Update(pu) = update pu
-        member _.Patch(pu) = patch pu
-
-        member this.Next() =
-            match patchQueue.TryDequeue() with
-            | false, _ ->
-                match updateQueue.TryDequeue() with
-                | false, _ -> None
-                | true, pu -> Some pu
-            | true, pu -> Some pu
-
-        member this.Updated = scheduledEvent.Publish
 
 and PatchUnit<'w> =
     { Widget: 'w
@@ -222,23 +195,3 @@ let rec runNextUpdate (ctx: IDslContext<'w>) () =
     | Some pu ->
         pu.Descriptor.PatchWidget ctx pu.Widget
         runNextUpdate ctx ()
-
-let mount (window: #Container) widgetDescriptor =
-    let scheduler =
-        DefaultPatchScheduler() :> IPatchScheduler<Widget>
-
-    let disposeHandle =
-        scheduler
-            .Updated
-            .Throttle(TimeSpan.FromMilliseconds(float 10))
-            .Subscribe(fun () -> gtkMainThreadAgent.OnNext(runNextUpdate scheduler))
-
-    window.Destroyed.Add(fun _ -> disposeHandle.Dispose())
-    let root = widgetDescriptor.CreateWidget()
-
-    scheduler.Update
-        { Widget = root
-          Descriptor = widgetDescriptor }
-
-    window.Add root
-    window.ShowAll()

@@ -15,6 +15,7 @@
     <Compile Include="Widgets\Bin.fs" />
     <Compile Include="Widgets\Quote.fs" />
     <Content Include="paket.references" />
+    <Compile Include="GtkSharp.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
