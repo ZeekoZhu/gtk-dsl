@@ -1,6 +1,5 @@
 module Gtk.DSL.Component
 
-open Gtk
 open Gtk.DSL.Core
 open System
 open System.Collections.Generic
@@ -16,35 +15,6 @@ type ValueRef<'v>(initValue: 'v) =
 
     member this.Stream = subject.AsObservable()
 
-//let setComponentFeatures (widget: #Widget) (features: ComponentFeatures) =
-//    widget.Data.[Symbols.dslComp] <- (features :> obj)
-//
-//let getComponentFeatures (widget: #Widget) =
-//    match widget.Data.[Symbols.dslComp] with
-//    | :? ComponentFeatures as features -> Some features
-//    | _ -> None
-
-type ComponentHost(typeId: DslSymbol, adaptor: IWidgetAdaptor<Widget>) as this =
-    inherit Bin()
-    do adaptor.SetNodeType this typeId
-
-    override this.Destroy() =
-        // hooks on destroy
-        match adaptor.TryGetComponentFeatures this.Child with
-        | Some features -> features.OnDestroy()
-        | None -> ()
-
-        base.Destroy()
-
-    interface IComponentHost<Widget> with
-        member this.Widget = this :> Widget
-        member this.Child = this.Child
-
-        member this.Replace(child: Widget) =
-            if this.Child <> null then
-                this.Child.Destroy()
-
-            this.Add(child)
 
 type WidgetRef<'w>() =
     let mutable current = None

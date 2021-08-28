@@ -4,7 +4,6 @@ open System
 open System.Collections.Concurrent
 open System.Reactive.Subjects
 open Gtk
-open Gtk.DSL.Component
 open Gtk.DSL.Core
 open System.Reactive.Linq
 
@@ -32,6 +31,28 @@ type DefaultPatchScheduler<'w>() =
             | true, pu -> Some pu
 
         member this.Updated = scheduledEvent.Publish
+
+type ComponentHost(typeId: DslSymbol, adaptor: IWidgetAdaptor<Widget>) as this =
+    inherit Bin()
+    do adaptor.SetNodeType this typeId
+
+    override this.Destroy() =
+        // hooks on destroy
+        match adaptor.TryGetComponentFeatures this.Child with
+        | Some features -> features.OnDestroy()
+        | None -> ()
+
+        base.Destroy()
+
+    interface IComponentHost<Widget> with
+        member this.Widget = this :> Widget
+        member this.Child = this.Child
+
+        member this.Replace(child: Widget) =
+            if this.Child <> null then
+                this.Child.Destroy()
+
+            this.Add(child)
 
 type GtkSharpWidgetAdaptor() =
     let ensureContainer (widget: Widget) fn =
