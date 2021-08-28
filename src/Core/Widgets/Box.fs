@@ -5,8 +5,9 @@ open Gtk.DSL.Core
 open Gtk.DSL.Quotation
 
 type BoxChildDescriptor(packType: PackType, expand: bool, fill: bool, padding: uint32) =
-    interface ChildPropertyDescriptor<Box> with
-        member this.AddChild(box: Box, child: #Widget) =
+    interface ChildPropertyDescriptor<Widget> with
+        member this.AddChild(box: Widget, child: Widget) =
+            let box = box :?> Box
             let pack =
                 match packType with
                 | PackType.End -> box.PackEnd
@@ -15,7 +16,7 @@ type BoxChildDescriptor(packType: PackType, expand: bool, fill: bool, padding: u
             pack (child, expand, fill, padding)
 
 let gtkBox props children =
-    containerWidget bindProperty (fun () -> new Box(Orientation.Horizontal, 0)) (props, children)
+    containerWidget bindProperty (fun () -> new Box(Orientation.Horizontal, 0) :> Widget) (props, children)
 
 let packStart (expand, fill, padding) child =
     { ChildProperties = BoxChildDescriptor(PackType.Start, expand, fill, padding)

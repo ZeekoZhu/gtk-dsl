@@ -1,11 +1,11 @@
 ﻿namespace Samples
 
 open Gdk
-open Gdk
 open Gtk
-open Gtk.DSL.Core
 open Gtk.DSL.Component
 open Gtk.DSL.Quotation
+open Gtk.DSL.GtkSharp
+open Gtk.DSL.Widgets.Box
 
 
 module Program =
@@ -32,7 +32,10 @@ module Program =
         |> statefullComponent
 
     let mainWindow =
-        fun () (ctx: ComponentContext) -> todoMain ()
+        fun () (ctx: ComponentContext) ->
+            gtkBox [] [
+                packStart (true, true, 16u) (todoMain ())
+            ]
         |> statefullComponent
 
     [<EntryPoint>]
@@ -57,7 +60,7 @@ module Program =
         let cssProvider = new CssProvider()
 
         if cssProvider.LoadFromPath "./app.css" then
-//            win.StyleContext.AddProvider(cssProvider, 800u)
+            //            win.StyleContext.AddProvider(cssProvider, 800u)
             StyleContext.AddProviderForScreen(Screen.Default, cssProvider, 800u)
         else
             printfn "not loaded"

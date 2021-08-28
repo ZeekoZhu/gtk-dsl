@@ -24,21 +24,21 @@ type ValueRef<'v>(initValue: 'v) =
 //    | :? ComponentFeatures as features -> Some features
 //    | _ -> None
 
-type ComponentHost(typeId: DslSymbol, ctx: IDslContext<Widget>) as this =
+type ComponentHost(typeId: DslSymbol, adaptor: IWidgetAdaptor<Widget>) as this =
     inherit Bin()
-    do ctx.WidgetAdaptor.SetNodeType this typeId
+    do adaptor.SetNodeType this typeId
 
     override this.Destroy() =
         // hooks on destroy
-        match ctx.WidgetAdaptor.TryGetComponentFeatures this.Child with
+        match adaptor.TryGetComponentFeatures this.Child with
         | Some features -> features.OnDestroy()
         | None -> ()
 
         base.Destroy()
 
     interface IComponentHost<Widget> with
-        member val Widget = this :> Widget
-        member val Child = this.Child
+        member this.Widget = this :> Widget
+        member this.Child = this.Child
 
         member this.Replace(child: Widget) =
             if this.Child <> null then

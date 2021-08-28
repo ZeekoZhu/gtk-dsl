@@ -108,7 +108,6 @@ let classNames<'w when 'w :> Widget> classNameList =
             let previousClasses = widget.Data.[classNamesSymbol] :?> string list
             previousClasses |> List.iter styleCtx.RemoveClass
         classNameList |> List.iter styleCtx.AddClass
-        printfn "class set"
     |> ClassNameBinding
 
 let bindProperty (widget: 'w) (binding: BindingInfo<'w>) =

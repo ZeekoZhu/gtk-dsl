@@ -6,10 +6,13 @@ open Gtk.DSL.Quotation
 
 let inline add child =
     { ChildProperties =
-          { new ChildPropertyDescriptor<#Bin> with
-              member this.AddChild(binLike, child) = binLike.Add(child) }
+          { new ChildPropertyDescriptor<Widget> with
+              member this.AddChild(binLike, child) =
+                  match binLike with
+                  | :? Bin as binLike -> binLike.Add(child)
+                  | _ -> failwithf $"{binLike} is not a Bin widget" }
       Child = child }
 
 
 let button props child =
-    containerWidget bindProperty (fun () -> new Button()) (props, add child |> Seq.singleton)
+    containerWidget bindProperty (fun () -> new Button() :> Widget) (props, add child |> Seq.singleton)
